@@ -1,0 +1,7 @@
+[report]
+omit =
+    setup.py
+    pydwrf2/__main__.py
+    pydwrf2/_version.py
+    versioneer.py
+    tests/*
