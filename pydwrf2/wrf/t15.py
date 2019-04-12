@@ -299,7 +299,7 @@ def process_file(filename, rows=None):
     area = (
         radius
         * radius
-        * (1.0 / 72)
+        * (1.0 / xlat.shape[-1])
         * 2
         * np.pi
         * (np.sin(np.deg2rad(xlat_v[1:])) - np.sin(np.deg2rad(xlat_v[:-1])))
