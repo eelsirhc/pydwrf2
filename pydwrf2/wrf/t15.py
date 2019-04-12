@@ -160,6 +160,8 @@ def t15data():
 
 
 try:
+    # Doesn't seem faster right now.
+    raise
     # Try importing Just-In-Time (jit) compiler from numba
     from numba import jit
 
@@ -183,28 +185,7 @@ try:
                 )
         return tw
 
-    raise
-
 except Exception:
-    #    print("Numba didn't import")
-    #    def interp(p, t, pw):
-    #        """Interpolate temperature in pressure."""
-    #        j = 0
-    #        tw = np.zeros(pw.size)
-    #        for i in np.arange(pw.size):
-    #            if pw[i] < p[0]:
-    #                tw[i] = t[0]
-    #            elif pw[i] >= p[-1]:
-    #                tw[i] = t[-1]
-    #            else:
-    #                while p[j + 1] < pw[i]:
-    #                    j = j + 1
-    #                k2 = j + 1
-    #                k1 = j
-    #                tw[i] = ((p[k2] - pw[i]) * t[k1] + (pw[i] - p[k1]) * t[k2]) / (
-    #                    p[k2] - p[k1]
-    #                )
-    #        return tw
     from scipy.interpolate import interp1d
 
     def interp(p, t, pw):
@@ -219,7 +200,7 @@ except Exception:
         return out
 
 
-def t15_coreB(press, temp, area):
+def t15_core_fast(press, temp, area):
     """Calculate area weighted mean brightness temperature at 15 microns
         First interpolate temperature profile to pressure values, then use
         weighting function to calculate brightness temperature.
@@ -262,7 +243,7 @@ def t15_coreB(press, temp, area):
     # return 0
 
 
-def t15_core(press, temp, area):
+def t15_core_slow(press, temp, area):
     """Calculate area weighted mean brightness temperature at 15 microns
         First interpolate temperature profile to pressure values, then use
         weighting function to calculate brightness temperature.
@@ -346,7 +327,7 @@ def process_file(filename, rows=None):
         press = P[i, :, latsel] + PB[i, :, latsel]
         theta = T[i, :, latsel] + t0
         temp = (press / p0) ** kappa * theta
-        t15_values = t15_coreB(press, temp, area[latsel])
+        t15_values = t15_core_fase(press, temp, area[latsel])
         tvals.append(t15_values)
     data = dict(ls=l_s[rows], t15=np.array(tvals))
     data["times"] = nc["Times"]
