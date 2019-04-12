@@ -68,7 +68,8 @@ def t15(filename):
 
 @cli.command()
 @click.argument("filename")
-def icemass(filename):
+@click.option("--variable", default="CO2ICE")
+def icemass(filename, variable):
     """Program to calculate icemass
 
         Args:
@@ -79,7 +80,7 @@ def icemass(filename):
     from .wrf import icemass as wicemass
 
     logging.info("icemass")
-    output_filename = cu.add_prefix_to_filename(filename, "icemass.")
+    output_filename = cu.add_prefix_to_filename(filename, "{}.mass.".format(variable))
 
     logging.info(output_filename)
 
@@ -87,46 +88,9 @@ def icemass(filename):
         data = input[["Times", "L_S"]]
         data.to_netcdf(output_filename)
 
-        dt = wicemass.process_file(filename)
+        dt = wicemass.process_file(filename, icevariable=variable)
         data = xarray.Dataset(dt)
         data.to_netcdf(output_filename)
-
-
-#@arg("filenames", nargs="+")
-#def process(filenames, output=None):
-#    output = output or "icemass.data"
-#    data = []
-#    for fname in filenames:
-#        print(fname)
-#        data.append(calculate_icemass(fname))
-#    if len(filenames) > 1:
-##        dic = OrderedDict()
- #       for k in ["ls", "icemass", "nh_icemass", "sh_icemass"]:
- #           dic[k] = numpy.hstack(list(zip([d[k] for d in data])))
- #       data = dic
- #   else:
- #       data = data[0]
- #   print(list(data.keys()))
- #   with open(output, "w") as outhandle:
- #       asciitable.write(
- ##           data,
-  #          output=outhandle,
-  #          delimiter=",",
-  ##          names=["ls", "icemass", "nh_icemass", "sh_icemass"],
-   #     )
-   # return None
-
-    # if interpolate_obs:
-    #   t15_ls,t15_t = t15.t15data()
-    #        interp_t15_t = numpy.interp(dd["ls"],t15_ls,t15_t)
-    #        dd["t15obs"]=interp_t15_t
-
-    # newdata = pd.DataFrame(dd)
-    # newdata.set_index("times",inplace=True)
-    # merge table (assuming Pandas)
-    # data = merge_tables(data,newdata)
-    # if the file was updated, write the new file
-
 
 if __name__ == "__main__":
     cli()
