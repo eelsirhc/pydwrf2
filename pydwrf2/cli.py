@@ -51,6 +51,7 @@ def t15(filename):
             table of data
     """
     from .wrf import t15 as wt15
+
     logging.info("T15")
     output_filename = cu.add_prefix_to_filename(filename, "t15.")
 
@@ -63,16 +64,68 @@ def t15(filename):
         dt = wt15.process_file(filename)
         data = xarray.Dataset(dt)
         data.to_netcdf(output_filename)
-        # if interpolate_obs:
-        #   t15_ls,t15_t = t15.t15data()
-        #        interp_t15_t = numpy.interp(dd["ls"],t15_ls,t15_t)
-        #        dd["t15obs"]=interp_t15_t
 
-        # newdata = pd.DataFrame(dd)
-        # newdata.set_index("times",inplace=True)
-        # merge table (assuming Pandas)
-        # data = merge_tables(data,newdata)
-        # if the file was updated, write the new file
+
+@cli.command()
+@click.argument("filename")
+def icemass(filename):
+    """Program to calculate icemass
+
+        Args:
+            filename: filename
+        Returns:
+            table of data
+    """
+    from .wrf import icemass as wicemass
+
+    logging.info("icemass")
+    output_filename = cu.add_prefix_to_filename(filename, "icemass.")
+
+    logging.info(output_filename)
+
+    with xarray.open_dataset(filename) as input:
+        data = input[["Times", "L_S"]]
+        data.to_netcdf(output_filename)
+
+        dt = wicemass.process_file(filename)
+        data = xarray.Dataset(dt)
+        data.to_netcdf(output_filename)
+
+
+#@arg("filenames", nargs="+")
+#def process(filenames, output=None):
+#    output = output or "icemass.data"
+#    data = []
+#    for fname in filenames:
+#        print(fname)
+#        data.append(calculate_icemass(fname))
+#    if len(filenames) > 1:
+##        dic = OrderedDict()
+ #       for k in ["ls", "icemass", "nh_icemass", "sh_icemass"]:
+ #           dic[k] = numpy.hstack(list(zip([d[k] for d in data])))
+ #       data = dic
+ #   else:
+ #       data = data[0]
+ #   print(list(data.keys()))
+ #   with open(output, "w") as outhandle:
+ #       asciitable.write(
+ ##           data,
+  #          output=outhandle,
+  #          delimiter=",",
+  ##          names=["ls", "icemass", "nh_icemass", "sh_icemass"],
+   #     )
+   # return None
+
+    # if interpolate_obs:
+    #   t15_ls,t15_t = t15.t15data()
+    #        interp_t15_t = numpy.interp(dd["ls"],t15_ls,t15_t)
+    #        dd["t15obs"]=interp_t15_t
+
+    # newdata = pd.DataFrame(dd)
+    # newdata.set_index("times",inplace=True)
+    # merge table (assuming Pandas)
+    # data = merge_tables(data,newdata)
+    # if the file was updated, write the new file
 
 
 if __name__ == "__main__":
