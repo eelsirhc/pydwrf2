@@ -51,6 +51,7 @@ def t15(filename):
             table of data
     """
     from .wrf import t15 as wt15
+
     logging.info("T15")
     output_filename = cu.add_prefix_to_filename(filename, "t15.")
 
@@ -63,17 +64,33 @@ def t15(filename):
         dt = wt15.process_file(filename)
         data = xarray.Dataset(dt)
         data.to_netcdf(output_filename)
-        # if interpolate_obs:
-        #   t15_ls,t15_t = t15.t15data()
-        #        interp_t15_t = numpy.interp(dd["ls"],t15_ls,t15_t)
-        #        dd["t15obs"]=interp_t15_t
 
-        # newdata = pd.DataFrame(dd)
-        # newdata.set_index("times",inplace=True)
-        # merge table (assuming Pandas)
-        # data = merge_tables(data,newdata)
-        # if the file was updated, write the new file
 
+@cli.command()
+@click.argument("filename")
+@click.option("--variable", default="CO2ICE")
+def icemass(filename, variable):
+    """Program to calculate icemass
+
+        Args:
+            filename: filename
+        Returns:
+            table of data
+    """
+    from .wrf import icemass as wicemass
+
+    logging.info("icemass")
+    output_filename = cu.add_prefix_to_filename(filename, "{}.mass.".format(variable))
+
+    logging.info(output_filename)
+
+    with xarray.open_dataset(filename) as input:
+        data = input[["Times", "L_S"]]
+        data.to_netcdf(output_filename)
+
+        dt = wicemass.process_file(filename, icevariable=variable)
+        data = xarray.Dataset(dt)
+        data.to_netcdf(output_filename)
 
 if __name__ == "__main__":
     cli()
