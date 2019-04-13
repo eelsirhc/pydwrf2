@@ -327,8 +327,13 @@ def process_file(filename, rows=None):
         press = P[i, :, latsel] + PB[i, :, latsel]
         theta = T[i, :, latsel] + t0
         temp = (press / p0) ** kappa * theta
-        t15_values = t15_core_fase(press, temp, area[latsel])
+        t15_values = t15_core_fast(press, temp, area[latsel])
         tvals.append(t15_values)
-    data = dict(ls=l_s[rows], t15=np.array(tvals))
+    t15=xarray.DataArray(np.array(tvals),dims=["Time"],
+                         attrs = dict(description="15 micron temperature calculated based on Basu(2002)"))
+    data = dict(ls=l_s[rows], 
+                t15=t15)
+
     data["times"] = nc["Times"]
+    
     return data
