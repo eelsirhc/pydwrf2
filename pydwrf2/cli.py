@@ -115,5 +115,13 @@ def index(directory, output_filename):
 
     json.dump(files, open(output_filename, "w"),indent=2)
 
+@cli.command()
+@click.argument("filename")
+@click.argument("output_filename")
+@click.argument("variable")
+def plot(filename, output_filename, variable):
+    from .wrf import plot as  wplot
+    wplot.plot_line(filename, output_filename, variable)
+
 if __name__ == "__main__":
     cli()
