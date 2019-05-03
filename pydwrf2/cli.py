@@ -91,6 +91,31 @@ def icemass(filename, output_filename, variable):
         data.to_netcdf(output_filename, unlimited_dims=["Time"])
 
 
+
+@cli.command()
+@click.argument("filename")
+@click.argument("output_filename")
+def energy_balance(filename, output_filename):
+    """Program to calculate energy balance
+
+        Args:
+            filename: filename
+        Returns:
+            table of data
+    """
+    from .wrf import energy_balance as eb
+
+    logging.info("energy balance")
+
+    logging.info(output_filename)
+
+    with xarray.open_dataset(filename) as input:
+#        data = input[["Times", "L_S"]]
+        dt = eb.process_file(filename)
+        data = xarray.Dataset(dt)
+        data.to_netcdf(output_filename, unlimited_dims=["Time"])
+
+
 @cli.command()
 @click.argument("directory")
 @click.argument("output_filename")
