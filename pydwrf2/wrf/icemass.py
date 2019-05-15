@@ -44,6 +44,8 @@ def process_file(fname, icevariable="CO2ICE", rows=None):
     )
     icemass = areasum(co2ice, area)
 
+    nc.close()
+    
     return dict(
         times=times,
         ls=ls,

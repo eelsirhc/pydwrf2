@@ -1,6 +1,35 @@
 import xarray
 import numpy as np
 
+def either(*args):
+    def access(nc):
+        for k in args:
+            if k in nc.variables:
+                return nc[k]
+    return access
+
+def latitude(nc):
+    lat = either("Latitude","XLAT")(nc)
+    if "Time" in lat.dims:
+        lat=lat.isel(Time=0)
+    return lat
+    
+    
+def slice_ls(ls, threshold=-100):
+    w = np.where(np.diff(ls)< threshold)
+    if len(w)==0:
+        raise ValueError("No Data in Ls")
+    if len(w[0])==0:
+        raise ValueError("No Data in Ls")
+    sl = np.hstack([-1,w[0],ls.size-1])
+    slices = [slice(a+1,b+1) for a,b in zip(sl[:-1],sl[1:])]
+    return slices
+    
+def continuous_ls(ls, threshold=-100):
+    """Converts Ls into a continuous monotic variable."""
+
+    return np.hstack([i*360+ls[s] for i,s in enumerate(slice_ls(ls, threshold))])
+    
 def area(nc):
     if "XLAT_V" in nc:
         dy = (
