@@ -1,5 +1,6 @@
 import matplotlib.cm as mpl_cm
 import palettable.colorbrewer as cb
+from scaled_ticks import ScaledLocator, ScaledFormatter, LsFormatter
 
 def get_map(cmap):
     """Get a color map based on the name.

@@ -6,6 +6,7 @@ def either(*args):
         for k in args:
             if k in nc.variables:
                 return nc[k]
+        raise NameError("Names not found: {}".format(",".join(args)))
     return access
 
 def latitude(nc):
@@ -18,11 +19,10 @@ def latitude(nc):
 def slice_ls(ls, threshold=-100):
     w = np.where(np.diff(ls)< threshold)
     if len(w)==0:
-        raise ValueError("No Data in Ls")
-    if len(w[0])==0:
-        raise ValueError("No Data in Ls")
-    sl = np.hstack([-1,w[0],ls.size-1])
-    slices = [slice(a+1,b+1) for a,b in zip(sl[:-1],sl[1:])]
+        slices = [slice(0,len(ls))]
+    else:
+        sl = np.hstack([-1,w[0],ls.size-1])
+        slices = [slice(a+1,b+1) for a,b in zip(sl[:-1],sl[1:])]
     return slices
     
 def continuous_ls(ls, threshold=-100):

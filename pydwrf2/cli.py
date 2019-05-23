@@ -11,13 +11,14 @@ def get_mode(filename):
     If the file exists -> 'a'
     else -> 'w'
     """
+    mode=''
     if os.path.exists(filename):
         logging.debug("{} exists, setting mode to 'a'".format(filename))
-        return 'a'
+        mode='a'
     else:
         logging.debug("{} does not exist, setting mode to 'w'".format(filename))
-        return 'w'
-
+        mode='w'
+    return mode
 
 def remove_contiguous(data, entry="contiguous"):
     for var in data.variables:
@@ -120,11 +121,11 @@ def icemass(filename, output_filename, variable):
 
     logging.info(output_filename)
 
-    with xarray.open_dataset(filename) as input:
-        data = input[["Times", "L_S"]]
-        dt = wicemass.process_file(filename, icevariable=variable)
-        data = remove_contiguous(xarray.Dataset(dt))
-        data.to_netcdf(output_filename, unlimited_dims=["Time"],mode=get_mode(output_filename))
+    dt = wicemass.process_file(filename, icevariable=variable)
+    data = remove_contiguous(xarray.Dataset(dt))
+
+
+    data.to_netcdf(output_filename, unlimited_dims=["Time"],mode='w')#get_mode(output_filename))
 
 
 
@@ -157,14 +158,16 @@ def _zonal_mean_surface(filename, output_filename, variable):
     logging.info("output to {}".format(output_filename))
 
     with xarray.open_dataset(filename) as input:
-
-        zm = xarray.Dataset(
-            zms(input, variable)
-            )
-        zm["L_S"] = input["L_S"]
-        zm["Times"] = input["Times"]
-        zm = remove_contiguous(zm)
-
+        def force_loop(s):
+            if isinstance(s,str):
+                return [s]
+            else:
+                return s
+        data = dict()
+        for v in force_loop(variable):
+            print(v)
+            data.update( zms(input, v) )
+        zm = remove_contiguous(xarray.Dataset(data))
         zm.to_netcdf(output_filename, unlimited_dims=["Time"],mode=get_mode(output_filename))
 
 @cli.command()
@@ -172,7 +175,7 @@ def _zonal_mean_surface(filename, output_filename, variable):
 @click.argument("output_filename")
 @click.argument("variable")
 def zonal_mean_surface(filename, output_filename, variable):
-    _zonal_mean_surface(filename, output_filename, variable)
+    _zonal_mean_surface(filename, output_filename, variable.split(","))
 
 @cli.command()
 @click.argument("filename")
@@ -181,31 +184,36 @@ def tau_od2d(filename, output_filename):
     _zonal_mean_surface(filename, output_filename, "TAU_OD2D")
 
 
+@cli.command()
+@click.argument("filename")
+@click.argument("output_filename")
+def water_column(filename, output_filename):
+    """Calculate water column abundance in ice, vapor, h2oice"""
 
-        
+    variables = ["H2OICE", "QV_COLUMN", "QI_COLUMN"]
+    _zonal_mean_surface(filename, output_filename, variables)
+
+
+
+@cli.command()
+@click.argument("filename")
+@click.argument("output_filename")
+def spinupsurface(filename, output_filename):
+    """Calculate a suite of surface diagnostics"""
+
+    variables = ["H2OICE", "QV_COLUMN", "QI_COLUMN",
+                 "TSK", "PSFC", "TAU_OD2D","TAU_CL2D",
+                 "QV_COLUMN","QI_COLUMN"
+    ]
+    _zonal_mean_surface(filename, output_filename, variables)
+
+ 
 @cli.command()
 @click.argument("directory")
 @click.argument("output_filename")
 def index(directory, output_filename):
-    import glob
-
-    wrfout = glob.glob(os.path.join(directory, "wrfout*"))
-    wrfrst = glob.glob(os.path.join(directory, "wrfrst*"))
-    auxhist5 = glob.glob(os.path.join(directory, "auxhist5*"))
-    auxhist8 = glob.glob(os.path.join(directory, "auxhist8*"))
-    auxhist9 = glob.glob(os.path.join(directory, "auxhist9*"))
-
-    files = dict(
-        wrfout=sorted(wrfout),
-        wrfrst=sorted(wrfrst),
-        auxhist5=sorted(auxhist5),
-        auxhist8=sorted(auxhist8),
-        auxhist9=sorted(auxhist9),
-    )
-
-    import json
-
-    json.dump(files, open(output_filename, "w"),indent=2)
+    from .wrf import common as wc
+    _ = wc._index(directory, output_filename)
 
 @cli.command()
 @click.argument("filename")
@@ -213,7 +221,21 @@ def index(directory, output_filename):
 @click.argument("variable")
 def quickplot(filename, output_filename, variable):
     from . import plots as wplot
-    wplot.quick_plot(filename, output_filename, variable)
+    wplot.quick_plot(filename, output_filename, variable.split(","))
+
+
+@cli.command()
+@click.argument("filenames")
+@click.option("--labels",default="")
+@click.argument("output_filename")
+@click.argument("variables")
+def multi_file_plot(filenames, labels, output_filename, variables):
+    from . import plots as wplot
+    wplot.multi_file_plot(filenames.split(","),
+                          labels.split(","),
+                          output_filename,
+                          variables.split(","))
+
 
 if __name__ == "__main__":
     cli()
