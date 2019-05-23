@@ -108,4 +108,3 @@ def multi_file_plot(filenames, labels, output_filename, variable):
         raise
     finally:
         pass
-                    
