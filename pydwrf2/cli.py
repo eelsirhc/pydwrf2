@@ -215,5 +215,24 @@ def quickplot(filename, output_filename, variable):
     from . import plots as wplot
     wplot.quick_plot(filename, output_filename, variable)
 
+
+@cli.command()
+@click.argument("dataset_name")
+def load_data(dataset_name):
+    from . import datasets as data
+    result = data.load_data(dataset_name)
+    import json
+    print(json.dumps(result, indent=2))
+    #for k,eentry in result:
+    ##    for k,v in entry.items():
+    #        tab="" if k=="filename" else "\t"
+    #        print("{}{} : {}".format(tab,k,v))
+        
+@cli.command()
+@click.option("--sourcelist")
+def list_data(sourcelist=None):
+    from . import datasets as data
+    data.list_data(sourcelist)    
+
 if __name__ == "__main__":
     cli()

@@ -73,4 +73,5 @@ def quick_plot(filename, output_filename, variable):
         func[s](filename, output_filename, variable)
     except Exception as e:
         raise
-        
+
+
