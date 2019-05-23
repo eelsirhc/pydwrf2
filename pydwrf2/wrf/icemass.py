@@ -13,22 +13,22 @@ def process_file(fname, icevariable="CO2ICE", rows=None):
         dy = (
             nc["XLAT_V"][:]
             .diff("south_north_stag")
-            .rename(south_north_stag="south_north")
+            .rename(dict(south_north_stag="south_north"))
         )
     else:
         dy = nc["XLAT_V"][:].diff("south_north").mean()
 
     if "XLONG_U" in nc:
-        dx = nc["XLONG_U"][:].diff("west_east_stag").rename(west_east_stag="west_east")
+        dx = nc["XLONG_U"][:].diff("west_east_stag").rename(dict(west_east_stag="west_east"))
     else:
         dx = nc["XLONG_U"][:].diff("west_east").mean()
 
-    y = nc["XLAT"]
+    y = nc["XLAT"][:]
     d2r = np.deg2rad
     area = nc.RADIUS * nc.RADIUS * d2r(dx) * d2r(dy) * np.cos(d2r(y))
 
-    ls = nc["L_S"]
-    times = nc["Times"]
+    ls = nc["L_S"][:]
+    times = nc["Times"][:]
 
     def areasum(ice, area):
         return (ice * area).sum(["south_north", "west_east"], skipna=True)
@@ -44,12 +44,13 @@ def process_file(fname, icevariable="CO2ICE", rows=None):
     )
     icemass = areasum(co2ice, area)
 
-    nc.close()
     
-    return dict(
-        times=times,
-        ls=ls,
-        icemass=icemass,
-        nh_icemass=nh_icemass,
-        sh_icemass=sh_icemass,
+    data =  dict(
+        Times=times.load(),
+        L_S=ls.load(),
+        icemass=icemass.load(),
+        nh_icemass=nh_icemass.load(),
+        sh_icemass=sh_icemass.load(),
     )
+    nc.close()
+    return data
