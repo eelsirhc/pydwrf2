@@ -222,16 +222,16 @@ def fetch_dataset(ARCHIVE, data_home=None, source_bucket=None, download_if_missi
                  else join(data_home, entry.filename))
         if not exists(entry["filename"]):
             if not download_if_missing:
-                processed.get(entry["filename"],dict())["status"]="not downloaded"
+                processed.get(entry["filename"],dict())["status"]=False
                 if stop_on_error:
                     raise IOError("Data not found and `download_if_missing` is False")
-            result["status"]="downloaded"
+            result["status"]=True
             archive_path, remote = _fetch_remote(entry, root=None, stop_on_error=stop_on_error)
             result["location"]=archive_path
             result["remote_sha256"]=remote.checksum
             result["sha256"]=remote.sha256
         else:
-            result["status"]="found"
+            result["status"]=True
             result["location"]=entry["filename"]
         processed[ef] = result
     return processed
