@@ -1,8 +1,23 @@
 import numpy as np
 import xarray
 from ..core import variables, utils
+from os.path import exists, dirname
+from os import makedirs
 
+def make_directory_for_file(filepath):
+    """Makes the directory pointed to be path if it doesn't exist already."""
 
+    if exists(filepath):
+        return filepath
+
+    directory = dirname(filepath)
+    if exists(directory):
+        return directory
+
+    makedirs(directory)
+    return directory
+    
+    
 def _index(directory, output_filename):
     import glob
     if directory is None:
@@ -10,11 +25,11 @@ def _index(directory, output_filename):
     else:
         pathjoin = lambda x, y: os.path.join(x,y)
     
-    wrfout = glob.glob(pathjoin(directory, "wrfout*"))
-    wrfrst = glob.glob(pathjoin(directory, "wrfrst*"))
-    auxhist5 = glob.glob(pathjoin(directory, "auxhist5*"))
-    auxhist8 = glob.glob(pathjoin(directory, "auxhist8*"))
-    auxhist9 = glob.glob(pathjoin(directory, "auxhist9*"))
+    wrfout = glob.glob(pathjoin(directory, "wrfout_*"))
+    wrfrst = glob.glob(pathjoin(directory, "wrfrst_*"))
+    auxhist5 = glob.glob(pathjoin(directory, "auxhist5_*"))
+    auxhist8 = glob.glob(pathjoin(directory, "auxhist8_*"))
+    auxhist9 = glob.glob(pathjoin(directory, "auxhist9_*"))
 
     files = dict(
         wrfout=sorted(wrfout),
@@ -25,7 +40,8 @@ def _index(directory, output_filename):
     )
 
     import json
-
+    make_directory_for_file(output_filename)
+    
     json.dump(files, open(output_filename, "w"),indent=2)
     return files
 

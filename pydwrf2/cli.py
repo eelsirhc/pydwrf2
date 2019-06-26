@@ -75,6 +75,24 @@ def lander(filename, output_filename, lander):
         pressure = remove_contiguous(pressure)
 
         pressure.to_netcdf(output_filename, unlimited_dims=['Time'],mode=get_mode(output_filename))
+
+
+@cli.command()
+@click.argument("filename")
+@click.argument("output_filename")
+@click.option("--width",default=10)
+
+def eq_tau_od2d(filename, output_filename, width=10):
+    """Program to calculate equatorial dust opacity"""
+    from .wrf import dust
+
+    with xarray.open_dataset(filename) as input:
+        tau = dust.process_file(filename, width=width)
+
+        tau = remove_contiguous(tau)
+
+        tau.to_netcdf(output_filename, unlimited_dims=['Time'],mode=get_mode(output_filename))
+
         
 @cli.command()
 @click.argument("filename")
@@ -215,28 +233,9 @@ def index(directory, output_filename):
     from .wrf import common as wc
     _ = wc._index(directory, output_filename)
 
-@cli.command()
-@click.argument("filename")
-@click.argument("output_filename")
-@click.argument("variable")
-def quickplot(filename, output_filename, variable):
-    from . import plots as wplot
-    wplot.quick_plot(filename, output_filename, variable.split(","))
 
-
-@cli.command()
-@click.argument("filenames")
-@click.option("--labels",default="")
-@click.argument("output_filename")
-@click.argument("variables")
-def multi_file_plot(filenames, labels, output_filename, variables):
-    from . import plots as wplot
-    wplot.multi_file_plot(filenames.split(","),
-                          labels.split(","),
-                          output_filename,
-                          variables.split(","))
-
-
+from .plots import commands as plot_commands
+plot_commands.register(cli)
 
 @cli.command()
 @click.argument("dataset_name")
@@ -252,9 +251,10 @@ def load_data(dataset_name):
         
 @cli.command()
 @click.option("--sourcelist")
-def list_data(sourcelist=None):
+@click.option("--full",is_flag=True,default=False)
+def list_data(sourcelist=None,full=False):
     from . import datasets as data
-    data.list_data(sourcelist)    
+    data.list_data(sourcelist,full)    
 
 if __name__ == "__main__":
     cli()

@@ -1,48 +1,28 @@
 #!/usr/bin/env python
 import numpy as np
 import xarray
-
+import matplotlib.pyplot as plt
+from ..plots import core
+from ..datasets import load_data
+import pandas as pd
+from . import area_integrals
 
 def process_file(fname, icevariable="CO2ICE", rows=None):
     """Calculate the area total icemass for the named ice variable."""
 
     nc = xarray.open_dataset(fname)
+    area, y = area_integrals.read_area(nc)
+
     co2ice = nc[icevariable]
-
-    if "XLAT_V" in nc:
-        dy = (
-            nc["XLAT_V"][:]
-            .diff("south_north_stag")
-            .rename(dict(south_north_stag="south_north"))
-        )
-    else:
-        dy = nc["XLAT_V"][:].diff("south_north").mean()
-
-    if "XLONG_U" in nc:
-        dx = nc["XLONG_U"][:].diff("west_east_stag").rename(dict(west_east_stag="west_east"))
-    else:
-        dx = nc["XLONG_U"][:].diff("west_east").mean()
-
-    y = nc["XLAT"][:]
-    d2r = np.deg2rad
-    area = nc.RADIUS * nc.RADIUS * d2r(dx) * d2r(dy) * np.cos(d2r(y))
 
     ls = nc["L_S"][:]
     times = nc["Times"][:]
 
-    def areasum(ice, area):
-        return (ice * area).sum(["south_north", "west_east"], skipna=True)
-
     equator = co2ice.south_north[co2ice.XLAT.sel(Time=0, west_east=0) > 0].min()
-    nh_icemass = areasum(
-        co2ice.where(co2ice.south_north >= equator),
-        area.where(area.south_north >= equator),
-    )
-    sh_icemass = areasum(
-        co2ice.where(co2ice.south_north < equator),
-        area.where(area.south_north < equator),
-    )
-    icemass = areasum(co2ice, area)
+    
+    nh_icemass = area_integrals.areasum(co2ice, area, south_lim=equator)
+    sh_icemass = area_integrals.areasum(co2ice, area, north_lim=equator)
+    icemass = area_integrals.areasum(co2ice, area)
 
     
     data =  dict(
@@ -54,3 +34,48 @@ def process_file(fname, icevariable="CO2ICE", rows=None):
     )
     nc.close()
     return data
+
+def plot_icemass(ice_filenames, output_filename, labels="", observation=True):
+    fig = plt.figure(figsize=(8,6))
+    ax = fig.gca()
+    filename_list = [x for x in ice_filenames.split(",") if len(x)]
+    labels_list = [x for x in labels.split(",") if len(x)]
+
+    if len(labels_list) < len(filename_list):
+        labels_list.extend(filename_list[len(labels_list):])
+
+    limits = np.array([np.nan,np.nan,np.nan,np.nan])
+            
+    for label,filename in zip(labels_list, filename_list):
+        with xarray.open_dataset(filename) as nc:
+            for ls,suffix in zip(["-",":","--"],["","nh_","sh_"]):
+                h, mylimits = core.plotline(nc["L_S"], nc["{}icemass".format(suffix)],True, label=label+" "+suffix.strip("_"),ls=ls)
+                limits = core.replace_limits(limits, mylimits)
+            
+    if observation:
+        # download the observation
+        try:
+            package = load_data("GRS")
+            for k,v in package.items():
+                if v["status"] and k.count("grs"):
+                    # read the observation
+                    df = pd.read_csv(v["location"], comment="#")
+                    # plot the observation
+                    for ls,suffix in zip(["-",":","--"],["total_","nh_","sh_"]):
+                        h, mylimits = core.plotline(df["L_S"],
+                                                    df["{}icemass".format(suffix)],
+                                                    True,
+                                                    label="grs "+suffix.strip("_"),
+                                                    ls=ls,
+                                                    alpha=0.8,
+                                                    color='grey')
+                        
+                        limits = core.replace_limits(limits, mylimits)
+        except NameError as e:
+            print(e)
+            print("icemass observation not found")
+            
+    plt.legend()
+        
+    plt.savefig(output_filename)
+
