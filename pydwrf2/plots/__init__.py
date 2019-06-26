@@ -1,9 +1,10 @@
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import xarray
 from ..core import variables
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 def lsticks(cls):
     plt.xlabel("L_S")
@@ -69,42 +70,3 @@ def quick_plot_2d(filename, output_filename, variable_list):
     finally:
         pass
         
-
-def quick_plot(filename, output_filename, variable):
-    try:
-        func = {1:quick_plot_1d, 2:quick_plot_2d}
-        
-        with xarray.open_dataset(filename) as input:
-            data = input[variable[0]]
-            s = len(data.shape)
-        func[s](filename, output_filename, variable)
-    except Exception as e:
-        raise
-
-def multi_file_plot(filenames, labels, output_filename, variable):
-    print(filenames)
-    try:
-        input_0 = xarray.open_dataset(filenames[0])
-        data_shape = input_0[variable[0]].shape
-        input_0.close
-        if len(data_shape) != 1:
-            raise Exception("Data needs to be 1 dimensional")
-            
-        plt.figure(figsize=(12,3))
-        for v in variable:
-            if len(labels) != len(filenames):
-                labels=filenames
-            for name, label in zip(filenames, labels):
-                with xarray.open_dataset(name) as input:
-                    cls = variables.continuous_ls(input["L_S"])
-                    data = input[v]
-                    C = plt.plot(cls,data,label=label)
-            plt.legend()
-            lsticks(cls)
-            plt.tight_layout()
-            plt.title(v)
-            plt.savefig(output_filename)
-    except Exception as e:
-        raise
-    finally:
-        pass
