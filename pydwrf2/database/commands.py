@@ -61,7 +61,39 @@ def index_ls(low, high, database_filename, database_ls_prefix, partial_sol):
     write_if_changed(df[select], filename)
     
 
+def _index_one_file(filename):
+    columns = [
+        "File_Counter",
+        "Filename",
+        "L_S",
+        "Times",
+        "Year",
+        "Sol",
+        "Hour",
+        "Minute",
+        "Second",
+    ]
+    nc = xarray.open_dataset(filename)
+    ls = nc["L_S"]
+    times = nc["Times"]
+    date = dates.parse_dates(times)
+    file_counter = 0
+    result = []
+    for l, t, d in zip(ls.values, times.values, date):
+        myr = [file_counter, filename, l, t.decode("utf-8")]
+        myr.extend(d)
+        result.append(myr)
+        file_counter += 1
+    df = pd.DataFrame(result, columns=columns).set_index("Times")
+    return df
 
+@database.command()
+@click.argument("filename")
+@click.argument("output_filename")
+def index_one_file(filename, output_filename):
+    df = _index_one_file(filename)
+    write_if_changed(df, output_filename)
+        
 @database.command()
 @click.option("--index_filename", type=str, default="output/index")
 @click.option(
@@ -106,22 +138,11 @@ def index(index_filename, database_filename):
         if old_mtime > os.path.getmtime(filename) and filename in old_df["Filename"]:
             print("Found unmodified data")
             continue
-
         # 2.a Load the file
-        nc = xarray.open_dataset(filename)
-        # 2.b read in L_S, times
-        ls = nc["L_S"]
-        times = nc["Times"]
-        date = dates.parse_dates(times)
-        # 2.c add in each entry into the table
-        file_counter = 0
-        for l, t, d in zip(ls.values, times.values, date):
-            myr = [file_counter, filename, l, t.decode("utf-8")]
-            myr.extend(d)
-            result.append(myr)
-            #            counter+=1
-            file_counter += 1
-    df = pd.DataFrame(result, columns=columns).set_index("Times")
+        myr = _index_one_file(filename)
+        result.append(myr)
+    df = pd.concat(result)
+        
     # 3. Check for the old database file
     # 4. Compare the two database files
     update_file = True
