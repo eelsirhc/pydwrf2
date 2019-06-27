@@ -1,7 +1,7 @@
 import numpy as np
 import xarray
 from ..core import variables, utils
-from os.path import exists, dirname
+from os.path import exists, dirname, join
 from os import makedirs
 
 def make_directory_for_file(filepath):
@@ -23,7 +23,7 @@ def _index(directory, output_filename):
     if directory is None:
         pathjoin = lambda x,y : y
     else:
-        pathjoin = lambda x, y: os.path.join(x,y)
+        pathjoin = lambda x, y: join(x,y)
     
     wrfout = glob.glob(pathjoin(directory, "wrfout_*"))
     wrfrst = glob.glob(pathjoin(directory, "wrfrst_*"))
