@@ -237,6 +237,10 @@ def index(directory, output_filename):
 from .plots import commands as plot_commands
 plot_commands.register(cli)
 
+from .database import commands as database_commands
+database_commands.register(cli)
+
+
 @cli.command()
 @click.argument("dataset_name")
 def load_data(dataset_name):

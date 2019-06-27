@@ -8,8 +8,8 @@ def database():
 
 @database.command()
 @click.option("--index_filename", type=str, default="output/index")
-@click.option("--database_index", type=str, default="output/database/database_index.csv")
-def database_index(index_filename, database_index):
+@click.option("--database_filename", type=str, default="output/database/database_index.csv")
+def database_index(index_filename, database_filename):
     """Create a new index file for the database.
 
     Each line includes an index number into each file from the entire wrfout collection
@@ -28,9 +28,9 @@ def database_index(index_filename, database_index):
     old_df = pd.DataFrame([], columns=columns)
     old_mtime = 0
 
-    if os.path.exists(database_index):
-        old_df = pd.read_csv(database_index)
-        old_mtime = os.path.getmtime(database_index)
+    if os.path.exists(database_filename):
+        old_df = pd.read_csv(database_filename)
+        old_mtime = os.path.getmtime(database_filename)
     
     result = []
     #counter=0
@@ -63,15 +63,17 @@ def database_index(index_filename, database_index):
     update_file = True
 
     new_df = df.merge(old_df)
-    new_df.index = np.arange(len(new_df))
+    new_df.index = list(range(len(new_df)))
     if old_df is not None and new_df.equals(old_df):
         update_file = False
 
     #5. If the data is modified, write a new file
     print(new_df)
     if update_file:
-        os.makedirs(os.path.dirname(database_index),exist_ok=True)
-        new_df.to_csv(database_index)
+        directory=os.path.dirname(database_filename)
+        if directory is not "" and not os.path.exists(directory):
+            os.makedirs(directory,exist_ok=True)
+        new_df.to_csv(database_filename)
 
 
 def register(com):
