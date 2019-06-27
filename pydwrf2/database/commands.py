@@ -67,23 +67,24 @@ def _index_one_file(filename):
         "Filename",
         "L_S",
         "Times",
-        "Year",
-        "Sol",
-        "Hour",
-        "Minute",
-        "Second",
+#        "Year",
+#        "Sol",
+#        "Hour",
+#        "Minute",
+#        "Second",
     ]
-    nc = xarray.open_dataset(filename)
-    ls = nc["L_S"]
-    times = nc["Times"]
-    date = dates.parse_dates(times)
-    file_counter = 0
     result = []
-    for l, t, d in zip(ls.values, times.values, date):
-        myr = [file_counter, filename, l, t.decode("utf-8")]
-        myr.extend(d)
-        result.append(myr)
-        file_counter += 1
+    if filename is not None:
+        nc = xarray.open_dataset(filename)
+        ls = nc["L_S"]
+        times = nc["Times"]
+        date = dates.parse_dates(times)
+        file_counter = 0
+        for l, t, d in zip(ls.values, times.values, date):
+            myr = [file_counter, filename, l, t.decode("utf-8")]
+            myr.extend(d)
+            result.append(myr)
+            file_counter += 1
     df = pd.DataFrame(result, columns=columns).set_index("Times")
     return df
 
@@ -99,7 +100,10 @@ def index_one_file(filename, output_filename):
 @click.option(
     "--database_filename", type=str, default="output/database/database_index.csv"
 )
-def index(index_filename, database_filename):
+@click.option(
+    "--intermediate", type=str, default="output/itermediate"
+)
+def index(index_filename, database_filename, intermediate):
     """Create a new index file for the database.
 
     Each line includes an index number into each file from the entire wrfout collection
@@ -113,19 +117,7 @@ def index(index_filename, database_filename):
 
 
     filepaths = json.load(open(index_filename, "r"))
-
-    columns = [
-        "File_Counter",
-        "Filename",
-        "L_S",
-        "Times",
-        "Year",
-        "Sol",
-        "Hour",
-        "Minute",
-        "Second",
-    ]
-    old_df = pd.DataFrame([], columns=columns).set_index("Times")
+    old_df = _index_one_file(None)
     old_mtime = 0
 
     if os.path.exists(database_filename):
@@ -135,6 +127,7 @@ def index(index_filename, database_filename):
     # counter=0
     # 2. Loop through the wrfout files
     for filename in tqdm(filepaths.get("wrfout", [])):
+        ls_filename = os.path.join(intermediate,os.basename(filename)+".ls")
         if old_mtime > os.path.getmtime(filename) and filename in old_df["Filename"]:
             print("Found unmodified data")
             continue
