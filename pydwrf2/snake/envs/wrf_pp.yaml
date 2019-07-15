@@ -1,0 +1,28 @@
+name: wrf_pp
+channels:
+  - chrislee
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.6
+  - numpy=1.15.4
+  - matplotlib=3.0
+  - jupyter
+  - jupyterlab
+  - seaborn=0.9
+  - pandas=0.24
+  - scipy=1.2.1
+  - scikit-learn=0.20
+  - awscli=1.16.132
+  - marstime
+  - pydwrf2
+  - dwell
+  - xarray
+  - pymc3
+  - statsmodels
+  - dask
+  - snakemake
+  - pip
+  - pip:
+    - environment_kernels

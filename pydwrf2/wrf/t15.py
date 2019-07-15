@@ -1,6 +1,5 @@
 import xarray
 import numpy as np
-from ..plots import core
 from ..datasets import load_data
 import pandas as pd
 
@@ -343,6 +342,9 @@ def process_file(filename, rows=None):
 
 
 def plot_t15(t15_filenames, output_filename, labels="", observation=True):
+    from ..plots import core
+    plt = core.plt
+    
     fig = plt.figure(figsize=(8,6))
     ax = fig.gca()
     filename_list = [x for x in t15_filenames.split(",") if len(x)]
@@ -372,4 +374,4 @@ def plot_t15(t15_filenames, output_filename, labels="", observation=True):
                 core.plotline(df["ls"],df["t15"],True, label="observation")
                 
     plt.legend()
-    
+    plt.savefig(output_filename)

@@ -25,11 +25,11 @@ def _index(directory, output_filename):
     else:
         pathjoin = lambda x, y: join(x,y)
     
-    wrfout = glob.glob(pathjoin(directory, "wrfout_*"))
-    wrfrst = glob.glob(pathjoin(directory, "wrfrst_*"))
-    auxhist5 = glob.glob(pathjoin(directory, "auxhist5_*"))
-    auxhist8 = glob.glob(pathjoin(directory, "auxhist8_*"))
-    auxhist9 = glob.glob(pathjoin(directory, "auxhist9_*"))
+    wrfout = glob.glob(pathjoin(directory, "wrfout_*_??:??:??"))
+    wrfrst = glob.glob(pathjoin(directory, "wrfrst_*_??:??:??"))
+    auxhist5 = glob.glob(pathjoin(directory, "auxhist5_*_??:??:??"))
+    auxhist8 = glob.glob(pathjoin(directory, "auxhist8_*_??:??:??"))
+    auxhist9 = glob.glob(pathjoin(directory, "auxhist9_*_??:??:??"))
 
     files = dict(
         wrfout=sorted(wrfout),
