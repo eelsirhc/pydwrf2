@@ -17,13 +17,14 @@ def process_file(fname, icevariable="CO2ICE", rows=None):
 
     ls = nc["L_S"][:]
     times = nc["Times"][:]
-
+    mu = nc["MU"] + nc["MUB"]
+    
     equator = co2ice.south_north[co2ice.XLAT.sel(Time=0, west_east=0) > 0].min()
     
     nh_icemass = area_integrals.areasum(co2ice, area, south_lim=equator)
     sh_icemass = area_integrals.areasum(co2ice, area, north_lim=equator)
     icemass = area_integrals.areasum(co2ice, area)
-
+    airmass = area_integrals.areasum(mu,area)
     
     data =  dict(
         Times=times.load(),
@@ -31,6 +32,7 @@ def process_file(fname, icevariable="CO2ICE", rows=None):
         icemass=icemass.load(),
         nh_icemass=nh_icemass.load(),
         sh_icemass=sh_icemass.load(),
+        airmass=airmass.load()
     )
     nc.close()
     return data
