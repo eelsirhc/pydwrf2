@@ -24,10 +24,11 @@ class CSVType(click.ParamType):
             return 'CSV'
 
 @click.group()
-def plots():
+def cli():
+    """Plot data from WRF output files and processed data."""
     pass
 
-@plots.command()
+@cli.command()
 @click.argument("filename", type=click.Path(exists=True))
 @click.argument("output_filename")
 @click.argument("variable", type=CSVType())
@@ -46,59 +47,50 @@ def quick_plot(filename, output_filename, variable):
 
 
 
-@plots.command()
+@cli.command()
 @click.argument("t15_filenames")
 @click.argument("output_filename")
 @click.option("--labels", default="")
 @click.option("--observation/--no-observation", is_flag=True, default=True)
-def plot_t15(t15_filenames, output_filename, labels="", observation=True):
-    from ..wrf import t15
-    t15.plot_t15(t15_filenames, output_filename, labels=labels,observation=observation)
+def t15(t15_filenames, output_filename, labels="", observation=True):
+    from ..wrf import t15 as t15m
+    t15m.plot_t15(t15_filenames, output_filename, labels=labels,observation=observation)
 
 
-@plots.command()
+@cli.command()
 @click.argument("lander_filenames", type=CSVType())
 @click.argument("output_filename")
 @click.option("--labels", default="", type=CSVType())
 @click.option("--observation/--no-observation", is_flag=True, default=True)
-def plot_lander(lander_filenames, output_filename, labels="", observation=True):
+def lander(lander_filenames, output_filename, labels="", observation=True):
         from ..wrf import vl
         vl.plot_lander(lander_filenames, output_filename, labels=labels, observation=observation)
     
-@plots.command()
+@cli.command()
 @click.argument("ice_filenames")
 @click.argument("output_filename")
 @click.option("--labels", default="")
 @click.option("--observation/--no-observation", is_flag=True, default=True)
-def plot_icemass(ice_filenames, output_filename, labels="", observation=True):
+def icemass(ice_filenames, output_filename, labels="", observation=True):
     from ..wrf import icemass
     icemass.plot_icemass(ice_filenames, output_filename, labels=labels, observation=observation)
 
 
-@plots.command()
+@cli.command()
 @click.argument("dust_filenames")
 @click.argument("output_filename")
 @click.option("--labels", default="")
 @click.option("--observation/--no-observation", is_flag=True, default=True)
-def plot_taudust(dust_filenames, output_filename, labels="", observation=True):
+def taudust(dust_filenames, output_filename, labels="", observation=True):
     from ..wrf import dust
     dust.plot_dust_scaled(dust_filenames, output_filename, labels=labels, observation=observation)
 
 
-@plots.command()
+@cli.command()
 @click.argument("arguments")
 @click.argument("input_filenames")
 @click.argument("output_filename")
 @click.option("--observation/--no-observation", is_flag=True, default=True)
-def plot(arguments, input_filenames, output_filename, observation=True):
+def print(arguments, input_filenames, output_filename, observation=True):
     print(arguments, input_filenames, output_filename, observation)
 
-    
-def register(com):
-    for entry in [quick_plot,
-                  plot_t15,
-                  plot_icemass,
-                  plot_taudust,
-                  plot_lander,
-                  plot]:
-        com.add_command(entry)
