@@ -2,6 +2,7 @@ import matplotlib
 matplotlib.use("Agg")
 import xarray
 from ..core import variables
+from . import core
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -44,19 +45,33 @@ def quick_plot_1d(filename, output_filename, variable):
     finally:
         pass
         
-        
+
 def quick_plot_2d(filename, output_filename, variable_list):
     try:
+        pc = core.Configuration()
         with xarray.open_dataset(filename) as input:
             from matplotlib.backends.backend_pdf import PdfPages
             with PdfPages(output_filename) as pdf:
                 for variable in variable_list:
+                    options = pc.options(variable)
                     data = input[variable]
                     if len(data.shape) != 2:
                         raise Exception("Data needs to be 2 dimensional")
                     plt.figure(figsize=(12,3))
                     cls = variables.continuous_ls(input["L_S"])
-                    C = plt.pcolormesh(cls,variables.latitude(input), data.T)
+
+                    if "cmap" not in options:
+                        options["cmap"] = "viridis"
+
+                    from matplotlib.ticker import MaxNLocator
+                    from matplotlib.colors import BoundaryNorm
+
+                    if "levels" not in options:
+                        options["levels"] = MaxNLocator(nbins=15).tick_values(data.min().values, data.max().values)
+                    cmap = plt.get_cmap(options["cmap"])
+                    norm = BoundaryNorm(options["levels"], ncolors=cmap.N, clip=True)
+                        
+                    C = plt.pcolormesh(cls,variables.latitude(input), data.T, norm=norm, cmap=cmap)
                     plt.ylabel("Latitude")
                     plt.yticks([-90,-45,0,45,90])
                     lsticks(cls)
