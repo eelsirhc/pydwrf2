@@ -240,6 +240,17 @@ plot_commands.register(cli)
 from .database import commands as database_commands
 database_commands.register(cli)
 
+@cli.command()
+@click.option("--config",is_flag=True, default=False)
+def snakefile(config):
+    module_path = os.path.dirname(__file__)
+    if config:
+        remote_data = os.path.join(module_path, "snake/config.yaml")
+    else:
+        remote_data = os.path.join(module_path, "snake/Snakefile")
+    print(remote_data)
+
+
 
 @cli.command()
 @click.argument("dataset_name")
