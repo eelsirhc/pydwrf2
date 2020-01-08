@@ -178,7 +178,7 @@ def _fetch_remote(remote, root=None, stop_on_error=True):
     print(scheme, location, path)
     if scheme=="s3":
         try:
-            from boto3.session import Session
+            from botocore.session import Session
             import boto3
             from botocore.exceptions import NoCredentialsError
             session = Session()
@@ -186,6 +186,8 @@ def _fetch_remote(remote, root=None, stop_on_error=True):
             progress = DownTransferProgress(client, location, path.lstrip("/"))
             
             client.download_file(location, path.lstrip("/"), file_path,Callback=progress) 
+        except ImportError as e:
+            print("Failed to import ", e)
         except NoCredentialsError as e:
             print("No S3 credentials found")
 
