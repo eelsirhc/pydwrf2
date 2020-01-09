@@ -8,8 +8,15 @@ from .interface import plot, database, data, single, wrf, snake
 @click.option("--debug/--no-debug", default=False)
 def cli(debug=False):
     """The master CLI interface."""
-    logging.basicConfig(filename="pydwrf2.log", level=logging.INFO)
-    pass
+    import logging.config
+    import yaml
+    try:
+        with open('config_log.yaml', 'r') as f:
+          config = yaml.safe_load(f.read())
+          logging.config.dictConfig(config)
+          logger = logging.getLogger(__name__)
+    except Exception as e:
+      logging.basicConfig(filename="pydwrf2.log", level=logging.INFO)
 
 
 def register(com, group, name=None, individual=False):

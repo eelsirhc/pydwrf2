@@ -92,7 +92,7 @@ def lander(filename, output_filename, lander):
 
 
 def eq_tau_od2d(filename, output_filename, width=10):
-    """Function to calculate equatorial dust opacity.
+    """Function to calculate zonal mean equatorial dust opacity.
 
 
     Args:
@@ -128,9 +128,9 @@ def t15(filename, output_filename):
 
     with xarray.open_dataset(filename) as input:
         logging.info("Calculating")
-        dt = wt15.process_file(filename)
-        data = xarray.Dataset(dt)
-        data[" L_S"] = input["L_S"]
+        table = wt15.process_file(filename)
+        data = xarray.Dataset(table)
+        data["L_S"] = input["L_S"]
         data["Times"] = input["Times"]
         data = remove_contiguous(data)
         logging.info("Saving")
@@ -193,7 +193,7 @@ def zonal_mean_surface(filename, output_filename, variable):
 
         data = dict()
         for v in force_loop(variable):
-            print(v)
+            logging.debug("Calculating {}".format(v))
             data.update(zms(input, v))
         zm = remove_contiguous(xarray.Dataset(data))
         zm.to_netcdf(

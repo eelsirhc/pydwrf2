@@ -18,6 +18,7 @@ from collections import namedtuple
 from urllib.request import urlretrieve
 from urllib.parse import urlsplit
 import sys
+import logging
 
 RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
@@ -138,6 +139,7 @@ def get_data_home(data_home=None):
         data_home = environ.get("MARS_DATA", join("~", "mars_data"))
     data_home = expanduser(data_home)
     if not exists(data_home):
+        logging.info("Creating data directory {}".format(data_home))
         makedirs(data_home)
     return data_home
 
@@ -248,13 +250,16 @@ def fetch_dataset(
         makedirs(data_home)
     processed = dict()
     for entry in ARCHIVE:
+        logging.info("Getting dataset {}".format(entry.filename))
         result = dict()
         ef = entry.filename
         entry["filename"] = (
             entry.filename if data_home is None else join(data_home, entry.filename)
         )
         if not exists(entry["filename"]):
+            logging.info("Dataset doesn't exist")
             if not download_if_missing:
+                logging.info("not downloading")
                 processed.get(entry["filename"], dict())["status"] = False
                 if stop_on_error:
                     raise IOError("Data not found and `download_if_missing` is False")

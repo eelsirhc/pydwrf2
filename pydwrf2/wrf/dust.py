@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from ..plots import core
 from ..datasets import load_data
 import pandas as pd
+import logging
 from . import area_integrals
 
 def process_file(fname, variable="TAU_OD2D", width=10):
@@ -49,6 +50,7 @@ def plot_dust_scaled(dust_filenames, output_filename, labels="", observation=Tru
             limits = core.replace_limits(limits, mylimits)
             
     if observation:
+        logging.info("Plotting observations")
         # download the observation
         try:
             package = load_data("MikeSmithTES")
@@ -68,9 +70,12 @@ def plot_dust_scaled(dust_filenames, output_filename, labels="", observation=Tru
         except NameError as e:
             print(e)
             print("dust observation not found")
-            
+    
+    plt.xlabel("L_S")
+    plt.ylabel("Equatorial Dust opacity")
     plt.legend()
-        
+    plt.xticks(np.arange((limits[0]//180)*180, 180*(limits[1]//180)+180,180))
+
     plt.savefig(output_filename)
 
 

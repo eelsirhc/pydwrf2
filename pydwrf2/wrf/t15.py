@@ -2,6 +2,7 @@ import xarray
 import numpy as np
 from ..datasets import load_data
 import pandas as pd
+import logging
 
 # Pressure grid for the interpolation
 pw = np.exp(((1 + np.arange(62)) / 10.0) - 4.6)
@@ -333,7 +334,7 @@ def process_file(filename, rows=None):
         tvals.append(t15_values)
     t15=xarray.DataArray(np.array(tvals),dims=["Time"],
                          attrs = dict(description="15 micron temperature calculated based on Basu(2002)"))
-    data = dict(ls=l_s[rows], 
+    data = dict(L_S=l_s[rows], 
                 t15=t15)
 
     data["times"] = nc["Times"]
@@ -364,6 +365,7 @@ def plot_t15(t15_filenames, output_filename, labels="", observation=True):
             limits = core.replace_limits(limits, mylimits)
             
     if observation:
+        logging.info("Plotting observation")
         # download the observation
         package = load_data("t15")
         for k,v in package.items():
@@ -371,7 +373,12 @@ def plot_t15(t15_filenames, output_filename, labels="", observation=True):
                 # read the observation
                 df = pd.read_csv(v["location"], comment="#")
                 # plot the observation
-                core.plotline(df["ls"],df["t15"],True, label="observation")
-                
+                h2, mylimits = core.plotline(df["ls"],df["t15"],True, label="observation")
+                limits = core.replace_limits(limits, mylimits)
+
+    
+    plt.xticks(np.arange((limits[0]//180)*180, 180*(limits[1]//180)+180,180))
+    plt.xlabel("L_S")
+    plt.ylabel("T15 (K)")
     plt.legend()
     plt.savefig(output_filename)

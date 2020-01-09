@@ -1,37 +1,43 @@
-import xarray
+"""CLI for plotting WRF data"""
 import click
-from ..datasets import load_data
+
+import xarray
 import pandas as pd
 import numpy as np
+
+from ..datasets import load_data
+
 class CSVType(click.ParamType):
-        name = 'csv'
+    name = 'csv'
 
-        def convert(self, value, param, ctx):
-            if isinstance(value, bytes):
+    def convert(self, value, param, ctx):
+        if isinstance(value, bytes):
+            try:
+                enc = getattr(sys.stdin, 'encoding', None)
+                if enc is not None:
+                    value = value.decode(enc)
+            except UnicodeError:
                 try:
-                    enc = getattr(sys.stdin, 'encoding', None)
-                    if enc is not None:
-                        value = value.decode(enc)
+                    value = value.decode(sys.getfilesystemencoding())
                 except UnicodeError:
-                    try:
-                        value = value.decode(sys.getfilesystemencoding())
-                    except UnicodeError:
-                        value = value.decode('utf-8', 'replace')
-                return value.split(',')
+                    value = value.decode('utf-8', 'replace')
             return value.split(',')
+        return value.split(',')
 
-        def __repr__(self):
-            return 'CSV'
+    def __repr__(self):
+        return 'CSV'
+
 
 @click.group()
 def cli():
     """Plot data from WRF output files and processed data."""
     pass
 
+
 @cli.command()
-@click.argument("filename", type=click.Path(exists=True))
+@click.argument("filename")
 @click.argument("output_filename")
-@click.argument("variable", type=CSVType())
+@click.argument("variable")#, type=CSVType())
 def quick_plot(filename, output_filename, variable):
     try:
         from ..plots import quick_plot_1d, quick_plot_2d
@@ -44,6 +50,13 @@ def quick_plot(filename, output_filename, variable):
     except Exception as e:
         raise
 
+
+@cli.command()
+@click.argument("filename",type=str)
+@click.argument("output_filename",type=str)
+@click.argument("var",type=str)#, type=CSVType())
+def qp(filename, output_filename, var):
+    print("spo")
 
 
 
@@ -63,17 +76,19 @@ def t15(t15_filenames, output_filename, labels="", observation=True):
 @click.option("--labels", default="", type=CSVType())
 @click.option("--observation/--no-observation", is_flag=True, default=True)
 def lander(lander_filenames, output_filename, labels="", observation=True):
-        from ..wrf import vl
-        vl.plot_lander(lander_filenames, output_filename, labels=labels, observation=observation)
-    
+    from ..wrf import vl
+    vl.plot_lander(lander_filenames, output_filename, labels=labels, observation=observation)
+
+
 @cli.command()
 @click.argument("ice_filenames")
 @click.argument("output_filename")
 @click.option("--labels", default="")
 @click.option("--observation/--no-observation", is_flag=True, default=True)
-def icemass(ice_filenames, output_filename, labels="", observation=True):
+@click.option("--wrap/--no-wrap", is_flag=True, default=False)
+def icemass(ice_filenames, output_filename, labels="", observation=True, wrap=False):
     from ..wrf import icemass
-    icemass.plot_icemass(ice_filenames, output_filename, labels=labels, observation=observation)
+    icemass.plot_icemass(ice_filenames, output_filename, labels=labels, observation=observation, wrap=wrap)
 
 
 @cli.command()
@@ -81,7 +96,7 @@ def icemass(ice_filenames, output_filename, labels="", observation=True):
 @click.argument("output_filename")
 @click.option("--labels", default="")
 @click.option("--observation/--no-observation", is_flag=True, default=True)
-def taudust(dust_filenames, output_filename, labels="", observation=True):
+def eq_taudust(dust_filenames, output_filename, labels="", observation=True):
     from ..wrf import dust
     dust.plot_dust_scaled(dust_filenames, output_filename, labels=labels, observation=observation)
 

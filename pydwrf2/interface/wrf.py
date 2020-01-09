@@ -32,7 +32,7 @@ def ls(filename, output_filename):
 def lander(filename, output_filename, lander):
     """Program to calculate surface pressure at lander sites."""
     logging.info("Lander")
-    logging.info("Landers: {}", ",".join(lander))
+    logging.info("Landers: {}".format(",".join(lander)))
     logging.info(filename)
     logging.info(output_filename)
     commands.lander(filename, output_filename, lander)
@@ -43,9 +43,9 @@ def lander(filename, output_filename, lander):
 @click.argument("output_filename")
 @click.option("--width", default=10)
 def eq_tau_od2d(filename, output_filename, width=10):
-    """Program to calculate equatorial dust opacity"""
+    """Program to calculate zonal mean equatorial dust opacity"""
     logging.info("Dust")
-    logging.info("Width: {}", width)
+    logging.info("Width: {}".format(width))
     logging.info(filename)
     logging.info(output_filename)
     commands.eq_tau_od2d(filename, output_filename, width=width)
@@ -56,11 +56,6 @@ def eq_tau_od2d(filename, output_filename, width=10):
 @click.argument("output_filename")
 def t15(filename, output_filename):
     """Program to calculate T15 brightness temperatures
-
-        Args:
-            filename: filename
-        Returns:
-            table of data
     """
 
     logging.info("T15")

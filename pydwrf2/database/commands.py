@@ -1,11 +1,12 @@
 import xarray
 import pandas as pd
 import json
-import click
 import os
 import numpy as np
 from tqdm import tqdm
 from ..wrf import dates
+import logging
+
 
 def write_if_changed(dataframe, filename, index_label="Times"):
     """Write the pandas dataframe only if it's different to the file."""
@@ -27,18 +28,18 @@ def write_if_changed(dataframe, filename, index_label="Times"):
         dataframe.to_csv(filename, index_label=index_label)
 
 
-@click.group()
-def database():
-    pass
+def sumsquare(d, axis=None):
+    return np.mean(np.multiply(d, d), axis)
 
-def csv(s):
-    return s.split(",")
-    
-@database.command()
-@click.argument("variable")
-@click.argument("index_filename")
-@click.argument("output_filename")
-@click.option("--aggregation", type=csv, default="mean,std")
+
+def suffix(xa, suffix):
+    names = dict(zip(xa.variables,
+                                ("{}{}".format(k,suffix) for k in xa.variables)))
+    if "hour" in names:
+        del names["hour"]
+    return xa.rename( names )
+
+
 def aggregate(variable, index_filename, output_filename, aggregation):
     """Dumb average of data"""
     index = pd.read_csv(index_filename, index_col=0)
@@ -46,9 +47,6 @@ def aggregate(variable, index_filename, output_filename, aggregation):
     data = []
     ntime = len(local_time_dimension)
 
-    def sumsquare(d, axis=None):
-        import numpy as np
-        return np.mean(np.multiply(d,d),axis)
     vv = variable.split(",") + ["hour"]
     
     for filename in tqdm(index["Filename"].unique()):
@@ -67,29 +65,22 @@ def aggregate(variable, index_filename, output_filename, aggregation):
                          max=g.max(["Time"]),
                          min=g.min(["Time"]),
                          sqs=g.reduce(sumsquare, dim=["Time"])))
-        
-    def suffix(xa, suffix):
-        names = dict(zip(xa.variables,
-                                ("{}{}".format(k,suffix) for k in xa.variables)))
-        if "hour" in names:
-            del names["hour"]
-        return xa.rename( names )
 
+  
     total_count = xarray.concat((d["count"] for d in data),dim="ensemble").groupby("hour").sum("ensemble")
     total = xarray.Dataset()
-    
+   
     if "mean" in aggregation:
         total_mean = xarray.concat((d["sum"]/total_count for d in data),dim="ensemble").groupby("hour").sum("ensemble")
-        total.merge(suffix(total_mean,"_mean"), inplace=True)
+        total = total.merge(suffix(total_mean,"_mean"))
 
     if "std" in aggregation:
-        #std as sqrt(mean(sum(x*x))-mean(x)**2)
         if "mean" not in aggregation:
             total_mean = xarray.concat((d["sum"]/total_count for d in data),dim="ensemble").groupby("hour").sum("ensemble")
         total_std = xarray.concat((d["sqs"]/total_count for d in data),dim="ensemble").groupby("hour").sum("ensemble")
         total_std = (total_std - total_mean**2)*0.5
         
-        total.merge(suffix(total_std,"_std"),inplace=True)
+        total = total.merge(suffix(total_std,"_std"))
 
     if "max" in aggregation:
         #max
@@ -97,7 +88,7 @@ def aggregate(variable, index_filename, output_filename, aggregation):
                      groupby("hour").
                      max("ensemble"))
         
-        total.merge(suffix(group_max,"_max"),inplace=True)
+        total = total.merge(suffix(group_max,"_max"))
 
     if "min" in aggregation:
         #min
@@ -105,20 +96,16 @@ def aggregate(variable, index_filename, output_filename, aggregation):
                      groupby("hour").
                      max("ensemble"))
 
-        total.merge(suffix(group_min,"_min"),inplace=True)
+        total = total.merge(suffix(group_min,"_min"))
 
     total.to_netcdf(output_filename)
 
-@database.command()
-@click.argument("low", type=float)
-@click.argument("high", type=float)
-@click.option(
-    "--database_filename", type=str, default="output/database/database_index.csv"
-)
-@click.option("--database_ls_prefix", type=str, default="output/database/database-ls")
-@click.option("--partial_sol", is_flag=True, default=False)
-@click.option("--format_string", default="05.1f")
-def index_ls(low, high, database_filename, database_ls_prefix, partial_sol,format_string):
+
+def index_ls(low, high,
+    database_filename="output/database/database_index.csv",
+    database_ls_prefix="output/database/database-ls",
+    partial_sol=True,
+    format_string="05.1f"):
     """Create an L_S specfic index.
 
     This file acts as a gateway to remaking a database file.
@@ -140,7 +127,8 @@ def index_ls(low, high, database_filename, database_ls_prefix, partial_sol,forma
     filename = database_ls_prefix + "-{}-{}.csv".format(format(low,format_string),
                                                         format(high,format_string))
     write_if_changed(df[select], filename)
-    
+
+
 
 def _index_one_file(filename, source_filename=None):
     columns = [
@@ -171,22 +159,15 @@ def _index_one_file(filename, source_filename=None):
     df = pd.DataFrame(result, columns=columns).set_index("Times")
     return df
 
-@database.command()
-@click.argument("filename")
-@click.argument("output_filename")
+
 def index_one_file(filename, output_filename):
-    df = _index_one_file(filename)
-    write_if_changed(df, output_filename)
-        
-@database.command()
-@click.option("--index_filename", type=str, default="output/index")
-@click.option(
-    "--database_filename", type=str, default="output/database/database_index.csv"
-)
-@click.option(
-    "--intermediate", type=str, default="output/intermediate"
-)
-def index(index_filename, database_filename, intermediate):
+    table = _index_one_file(filename)
+    write_if_changed(table, output_filename)
+
+
+def index(index_filename="output/index",
+    database_filename="output/database/database_index.csv",
+    intermediate="output/intermediate"):
     """Create a new index file for the database.
 
     Each line includes an index number into each file from the entire wrfout collection

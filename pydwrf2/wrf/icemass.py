@@ -6,6 +6,7 @@ from ..plots import core
 from ..datasets import load_data
 import pandas as pd
 from . import area_integrals
+import logging
 
 def process_file(fname, icevariable="CO2ICE", rows=None):
     """Calculate the area total icemass for the named ice variable."""
@@ -37,7 +38,7 @@ def process_file(fname, icevariable="CO2ICE", rows=None):
     nc.close()
     return data
 
-def plot_icemass(ice_filenames, output_filename, labels="", observation=True):
+def plot_icemass(ice_filenames, output_filename, labels="", observation=True, wrap=False):
     fig = plt.figure(figsize=(8,6))
     ax = fig.gca()
     filename_list = [x for x in ice_filenames.split(",") if len(x)]
@@ -47,25 +48,29 @@ def plot_icemass(ice_filenames, output_filename, labels="", observation=True):
         labels_list.extend(filename_list[len(labels_list):])
 
     limits = np.array([np.nan,np.nan,np.nan,np.nan])
-            
+    
+    wrap_func = lambda x: x
+    if wrap:
+        wrap_func = lambda x: x%360
     for label,filename in zip(labels_list, filename_list):
         with xarray.open_dataset(filename) as nc:
             for ls,suffix in zip(["-",":","--"],["","nh_","sh_"]):
-                h, mylimits = core.plotline(nc["L_S"], nc["{}icemass".format(suffix)],True, label=label+" "+suffix.strip("_"),ls=ls)
+                h, mylimits = core.plotline(wrap_func(nc["L_S"]), nc["{}icemass".format(suffix)],True, label=label+" "+suffix.strip("_"),ls=ls)
                 limits = core.replace_limits(limits, mylimits)
             
     if observation:
+        logging.info("Plotting observation")
         # download the observation
         try:
             package = load_data("GRS")
             for k,v in package.items():
                 if v["status"] and k.count("grs"):
                     # read the observation
-                    df = pd.read_csv(v["location"], comment="#")
+                    table = pd.read_csv(v["location"], comment="#")
                     # plot the observation
                     for ls,suffix in zip(["-",":","--"],["total_","nh_","sh_"]):
-                        h, mylimits = core.plotline(df["L_S"],
-                                                    df["{}icemass".format(suffix)],
+                        h, mylimits = core.plotline(wrap_func(table["L_S"]),
+                                                    table["{}icemass".format(suffix)],
                                                     True,
                                                     label="grs "+suffix.strip("_"),
                                                     ls=ls,
@@ -76,7 +81,9 @@ def plot_icemass(ice_filenames, output_filename, labels="", observation=True):
         except NameError as e:
             print(e)
             print("icemass observation not found")
-            
+
+    plt.xlabel("L_S")
+    plt.ylabel("Ice mass (kg)")
     plt.legend()
         
     plt.savefig(output_filename)
