@@ -3,19 +3,6 @@ import logging
 from .core import utils as cu
 from .interface import plot, database, data, single, wrf, snake
 
-def remove_contiguous(data, entry="contiguous"):
-    """Removes the contiguous entry from the encoding from certain variables.
-      Args:
-        data  : object, probably xarray, containing 'variables'
-        entry : a string to search for and remove.
-      Remove:
-        data : cleaned.
-    """
-    for var in data.variables:
-        if entry in data[var].encoding:
-            del data[var].encoding[entry]
-    return data
-
 
 @click.group()
 @click.option("--debug/--no-debug", default=False)
@@ -23,8 +10,6 @@ def cli(debug=False):
     """The master CLI interface."""
     logging.basicConfig(filename="pydwrf2.log", level=logging.INFO)
     pass
-
-
 
 
 def register(com, group, name=None, individual=False):

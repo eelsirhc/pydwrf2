@@ -2,6 +2,12 @@ from setuptools import setup
 import versioneer
 
 requirements = [
+    'palettable',
+    'numpy',
+    'pandas',
+    'xarray',
+    'matplotlib',
+    'netcdf4',
     # package requirements go here
 ]
 
