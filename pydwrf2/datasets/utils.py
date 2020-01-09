@@ -10,52 +10,70 @@ IO Code to download datasets
 
 # Christopher Lee 2019
 
-from os import environ, listdir, makedirs
-from os.path import dirname, exists, expanduser, isdir, join, splitext
+import threading
 import hashlib
-import shutil
+from os import environ, makedirs
+from os.path import dirname, exists, expanduser, isdir, join
 from collections import namedtuple
 from urllib.request import urlretrieve
 from urllib.parse import urlsplit
 import sys
 
-RemoteFileMetadata = namedtuple('RemoteFileMetadata',
-                                ['filename', 'url', 'checksum'])
+RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
-import threading
+# Try to import tqdm for a progress bar
 try:
     from tqdm import tqdm
-except:
-    tqdm = None
+except ImportError as e:
+
+    class tqdm(object):
+        def __init__(self, total=None):
+            self._size = total
+            self._seen_so_far = 0
+
+        def update(self, addon):
+            self._seen_so_far += addon
+            if self._size is None:
+                print("Bytes : {}".format(self._seen_so_far))
+            else:
+                percentage = round((self._seen_so_far / self._size) * 100, 2)
+                print("Percentage : {}%".format(percentage))
+
+        def close(self):
+            pass
+
+
 class TransferProgress(object):
     def __init__(self, bucket, filename):
         self._filename = filename
-        #self._size = float(os.path.getsize(filename))
+        # self._size = float(os.path.getsize(filename))
         self._seen_so_far = 0
         self._lock = threading.Lock()
 
-        if tqdm is not None and hasattr(self,"_size"):
-            self._pbar = tqdm(total=self._size)
+        if hasattr(self, "_size"):
+            size = self._size
+        else:
+            size = None
+        self._pbar = tqdm(total=size)
 
     def __call__(self, bytes):
         with self._lock:
             self._seen_so_far += bytes
-            percentage = round((self._seen_so_far / self._size) * 100,2)
-            if tqdm is not None:
-                self._pbar.update(bytes)
-            else:
-                print("Percentage : {}%".format(percentage))
+            self._pbar.update(bytes)
             sys.stdout.flush()
 
     def __del__(self):
-        if hasattr(self,"_pbar"):
-            self._pbar.close()
+        self._pbar.close()
+
 
 class DownTransferProgress(TransferProgress):
     def __init__(self, client, bucket, filename):
-        self._size = int(client.head_object(Bucket=bucket, Key=filename)['ResponseMetadata']['HTTPHeaders']['content-length'])
+        self._size = int(
+            client.head_object(Bucket=bucket, Key=filename)["ResponseMetadata"][
+                "HTTPHeaders"
+            ]["content-length"]
+        )
         super().__init__(bucket, filename)
-
 
 
 class Bunch(dict):
@@ -100,6 +118,7 @@ class Bunch(dict):
         # ignoring the pickled __dict__
         pass
 
+
 def get_data_home(data_home=None):
     """Return the path of the mars_data dir.
     This folder is used by some large dataset loaders to avoid downloading the
@@ -116,12 +135,12 @@ def get_data_home(data_home=None):
         The path to mars_data dir.
     """
     if data_home is None:
-        data_home = environ.get('MARS_DATA',
-                                join('~', 'mars_data'))
+        data_home = environ.get("MARS_DATA", join("~", "mars_data"))
     data_home = expanduser(data_home)
     if not exists(data_home):
         makedirs(data_home)
     return data_home
+
 
 def clear_data_home(data_home=None):
     """Delete all the content of the data home cache.
@@ -131,7 +150,8 @@ def clear_data_home(data_home=None):
         The path to mars_data dir.
     """
     data_home = get_data_home(data_home)
-    #shutil.rmtree(data_home)
+    # shutil.rmtree(data_home)
+
 
 def _sha256(path):
     """Calculate the sha256 hash of the file at path."""
@@ -164,8 +184,7 @@ def _fetch_remote(remote, root=None, stop_on_error=True):
         Full path of the created file.
     """
 
-    file_path = (remote.filename if root is None
-                 else join(root, remote.filename))
+    file_path = remote.filename if root is None else join(root, remote.filename)
     dir_path = dirname(file_path)
 
     if exists(dir_path):
@@ -176,16 +195,19 @@ def _fetch_remote(remote, root=None, stop_on_error=True):
 
     scheme, location, path, query, fragment = urlsplit(remote.url)
     print(scheme, location, path)
-    if scheme=="s3":
+    if scheme == "s3":
         try:
             from botocore.session import Session
             import boto3
             from botocore.exceptions import NoCredentialsError
+
             session = Session()
-            client = boto3.client('s3')
+            client = boto3.client("s3")
             progress = DownTransferProgress(client, location, path.lstrip("/"))
-            
-            client.download_file(location, path.lstrip("/"), file_path,Callback=progress) 
+
+            client.download_file(
+                location, path.lstrip("/"), file_path, Callback=progress
+            )
         except ImportError as e:
             print("Failed to import ", e)
         except NoCredentialsError as e:
@@ -199,16 +221,24 @@ def _fetch_remote(remote, root=None, stop_on_error=True):
     if remote.checksum != checksum:
         remote["sha256"] = "Failed"
         if stop_on_error:
-            raise IOError("{} has an SHA256 checksum ({}) "
-                      "differing from expected ({}), "
-                      "file may be corrupted.".format(file_path, checksum,
-                                                      remote.checksum))
+            raise IOError(
+                "{} has an SHA256 checksum ({}) "
+                "differing from expected ({}), "
+                "file may be corrupted.".format(file_path, checksum, remote.checksum)
+            )
     else:
         remote["sha256"] = "Passed"
 
     return file_path, remote
 
-def fetch_dataset(ARCHIVE, data_home=None, source_bucket=None, download_if_missing=True, stop_on_error=True):
+
+def fetch_dataset(
+        ARCHIVE,
+        data_home=None,
+        source_bucket=None,
+        download_if_missing=True,
+        stop_on_error=True,
+):
     """
         Fetch a dataset and return the dataset location
     """
@@ -220,22 +250,23 @@ def fetch_dataset(ARCHIVE, data_home=None, source_bucket=None, download_if_missi
     for entry in ARCHIVE:
         result = dict()
         ef = entry.filename
-        entry["filename"] = (entry.filename if data_home is None
-                 else join(data_home, entry.filename))
+        entry["filename"] = (
+            entry.filename if data_home is None else join(data_home, entry.filename)
+        )
         if not exists(entry["filename"]):
             if not download_if_missing:
-                processed.get(entry["filename"],dict())["status"]=False
+                processed.get(entry["filename"], dict())["status"] = False
                 if stop_on_error:
                     raise IOError("Data not found and `download_if_missing` is False")
-            result["status"]=True
-            archive_path, remote = _fetch_remote(entry, root=None, stop_on_error=stop_on_error)
-            result["location"]=archive_path
-            result["remote_sha256"]=remote.checksum
-            result["sha256"]=remote.sha256
+            result["status"] = True
+            archive_path, remote = _fetch_remote(
+                entry, root=None, stop_on_error=stop_on_error
+            )
+            result["location"] = archive_path
+            result["remote_sha256"] = remote.checksum
+            result["sha256"] = remote.sha256
         else:
-            result["status"]=True
-            result["location"]=entry["filename"]
+            result["status"] = True
+            result["location"] = entry["filename"]
         processed[ef] = result
     return processed
-
-
