@@ -1,10 +1,10 @@
 """Interacts with datasets held remotely."""
 
 from os.path import dirname, join, exists
-import pandas as pd
+import yaml
 from .utils import fetch_dataset, RemoteFileMetadata, get_data_home
 
-DEFAULT_REMOTE = "remote_data.csv"
+DEFAULT_REMOTE = "remote_data.yaml"
 def load_data(name, remote=None):
     """Load a named dataset from a remote location.
 
@@ -21,15 +21,14 @@ def load_data(name, remote=None):
     else:
         remote_data = remote
 
-    table = pd.read_csv(remote_data)
-    if any(table["name"] == name):
-        data = [v for k, v in table[table["name"] == name].iterrows()]
-        return fetch_dataset(data)
+    table = yaml.safe_load(open(remote_data,'r'))
+    if name in table:
+        return fetch_dataset(table[name])
     else:
         raise NameError("{} not found".format(name))
 
 
-def list_data(remote, full=False):
+def list_data(remote=None, full=False):
     """List the data available from the remote.
 
     If no remote is given, use the default.
@@ -44,15 +43,24 @@ def list_data(remote, full=False):
     else:
         remote_data = remote
 
-    table = pd.read_csv(remote_data)
+    table = yaml.safe_load(open(remote_data,'r'))
     home = get_data_home(data_home=None)
-
-    for _, row in table.iterrows():
+    for name, row in table.items():
+        print(name)
         if not full:
-            print(row["name"], row["filename"])
+            for elem in row:
+                print("\t",elem["filename"])
         else:
-            print(row["name"])
-            for key in ["filename", "url", "checksum"]:
-                print("\t{}".format(row[key]))
-            print("\t!downloaded" if exists(join(home,row["filename"]))
-                  else "\tnot downloaded")
+            for elem in row:
+                for key in ["filename", "url", "checksum"]:
+                    print("\t{}".format(elem[key]))
+                print("\t!downloaded" if exists(join(home,elem["filename"]))
+                      else "\tnot downloaded")
+
+
+#if __name__ == "__main__":
+#    import argh
+#    parser = argh.ArghParser()
+#    parser.add_commands([list_data, load_data])
+#    parser.dispatch()
+

@@ -1,7 +1,7 @@
 import click
+from .common import LazyGroup
 
-
-@click.group()
+@click.group()#(cls=LazyGroup, import_name='pydwrf2.data:cli')
 def cli():
     """Interact with pre-generated datasets for Mars."""
 

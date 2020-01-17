@@ -221,7 +221,3 @@ def index(index_filename="output/index",
         if directory is not "" and not os.path.exists(directory):
             os.makedirs(directory, exist_ok=True)
         new_df.to_csv(database_filename, index_label="Times")
-
-
-def register(com):
-    com.add_command(database)

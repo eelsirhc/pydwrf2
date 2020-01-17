@@ -1,8 +1,8 @@
 import click
 import logging
-from ..wrf import commands
+from .common import LazyGroup
 
-@click.group()
+@click.group()#(cls=LazyGroup, import_name="pydwrf2.cli:wrf")
 def cli():
     """Calculate diagnostics from WRF output files."""
     pass
@@ -22,7 +22,7 @@ def ls(filename, output_filename):
     """
     logging.info("Ls")
     logging.info(output_filename)
-    
+    from ..wrf import commands
     commands.ls(filename, output_filename)
 
 @cli.command()
@@ -35,6 +35,7 @@ def lander(filename, output_filename, lander):
     logging.info("Landers: {}".format(",".join(lander)))
     logging.info(filename)
     logging.info(output_filename)
+    from ..wrf import commands
     commands.lander(filename, output_filename, lander)
 
 
@@ -48,6 +49,7 @@ def eq_tau_od2d(filename, output_filename, width=10):
     logging.info("Width: {}".format(width))
     logging.info(filename)
     logging.info(output_filename)
+    from ..wrf import commands
     commands.eq_tau_od2d(filename, output_filename, width=width)
 
 
@@ -61,6 +63,7 @@ def t15(filename, output_filename):
     logging.info("T15")
     logging.info(filename)
     logging.info(output_filename)
+    from ..wrf import commands
     commands.t15(filename, output_filename)
 
 @cli.command()
@@ -79,6 +82,7 @@ def icemass(filename, output_filename, variable):
     logging.info(filename)
     logging.info(output_filename)
     logging.info(variable)
+    from ..wrf import commands
     commands.icemass(filename, output_filename, variable)
 
 @cli.command()
@@ -95,6 +99,7 @@ def energy_balance(filename, output_filename):
     logging.info("energy balance")
     logging.info(filename)
     logging.info(output_filename)
+    from ..wrf import commands
     commands.energy_balance(filename, output_filename)
 
 
@@ -103,6 +108,10 @@ def energy_balance(filename, output_filename):
 @click.argument("output_filename")
 @click.argument("variable")
 def zonal_mean_surface(filename, output_filename, variable):
+    logging.info("zonal mean surface")
+    logging.info(filename)
+    logging.info(output_filename)
+    from ..wrf import commands
     commands.zonal_mean_surface(filename, output_filename, variable.split(","))
 
 
@@ -110,6 +119,10 @@ def zonal_mean_surface(filename, output_filename, variable):
 @click.argument("filename")
 @click.argument("output_filename")
 def tau_od2d(filename, output_filename):
+    logging.info("tau_od2d")
+    logging.info(filename)
+    logging.info(output_filename)
+    from ..wrf import commands
     commands.zonal_mean_surface(filename, output_filename, "TAU_OD2D")
 
 
@@ -118,7 +131,10 @@ def tau_od2d(filename, output_filename):
 @click.argument("output_filename")
 def water_column(filename, output_filename):
     """Calculate water column abundance in ice, vapor, h2oice"""
-
+    logging.info("water column")
+    logging.info(filename)
+    logging.info(output_filename)
+    from ..wrf import commands
     variables = ["H2OICE", "QV_COLUMN", "QI_COLUMN"]
     commands.zonal_mean_surface(filename, output_filename, variables)
 
@@ -128,7 +144,10 @@ def water_column(filename, output_filename):
 @click.argument("output_filename")
 def spinupsurface(filename, output_filename):
     """Calculate a suite of surface diagnostics"""
-
+    logging.info("spinup surface")
+    logging.info(filename)
+    logging.info(output_filename)
+    from ..wrf import commands
     variables = [
         "H2OICE",
         "QV_COLUMN",

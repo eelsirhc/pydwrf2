@@ -2,7 +2,7 @@ import numpy as np
 import xarray
 from ..core import variables, utils
 from os.path import exists, dirname, join
-from os import makedirs
+from os import makedirs, path
 
 def make_directory_for_file(filepath):
     """Makes the directory pointed to be path if it doesn't exist already."""
@@ -24,19 +24,23 @@ def _index(directory, output_filename):
         pathjoin = lambda x,y : y
     else:
         pathjoin = lambda x, y: join(x,y)
+
+    def sorted_strip_base(li):
+        return sorted([path.basename(l) for l in li])
     
     wrfout = glob.glob(pathjoin(directory, "wrfout_*_??:??:??"))
     wrfrst = glob.glob(pathjoin(directory, "wrfrst_*_??:??:??"))
     auxhist5 = glob.glob(pathjoin(directory, "auxhist5_*_??:??:??"))
     auxhist8 = glob.glob(pathjoin(directory, "auxhist8_*_??:??:??"))
     auxhist9 = glob.glob(pathjoin(directory, "auxhist9_*_??:??:??"))
-
+    
     files = dict(
-        wrfout=sorted(wrfout),
-        wrfrst=sorted(wrfrst),
-        auxhist5=sorted(auxhist5),
-        auxhist8=sorted(auxhist8),
-        auxhist9=sorted(auxhist9),
+        root=directory,
+        wrfout=sorted_strip_base(wrfout),
+        wrfrst=sorted_strip_base(wrfrst),
+        auxhist5=sorted_strip_base(auxhist5),
+        auxhist8=sorted_strip_base(auxhist8),
+        auxhist9=sorted_strip_base(auxhist9),
     )
 
     import json

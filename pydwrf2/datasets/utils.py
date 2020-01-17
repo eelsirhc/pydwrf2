@@ -186,7 +186,7 @@ def _fetch_remote(remote, root=None, stop_on_error=True):
         Full path of the created file.
     """
 
-    file_path = remote.filename if root is None else join(root, remote.filename)
+    file_path = remote["filename"] if root is None else join(root, remote["filename"])
     dir_path = dirname(file_path)
 
     if exists(dir_path):
@@ -195,7 +195,7 @@ def _fetch_remote(remote, root=None, stop_on_error=True):
     else:
         makedirs(dir_path)
 
-    scheme, location, path, query, fragment = urlsplit(remote.url)
+    scheme, location, path, query, fragment = urlsplit(remote["url"])
     print(scheme, location, path)
     if scheme == "s3":
         try:
@@ -216,17 +216,17 @@ def _fetch_remote(remote, root=None, stop_on_error=True):
             print("No S3 credentials found")
 
     else:
-        urlretrieve(remote.url, file_path)
+        urlretrieve(remote["url"], file_path)
     checksum = _sha256(file_path)
     remote["remote_sha256"] = checksum
 
-    if remote.checksum != checksum:
+    if remote["checksum"] != checksum:
         remote["sha256"] = "Failed"
         if stop_on_error:
             raise IOError(
                 "{} has an SHA256 checksum ({}) "
                 "differing from expected ({}), "
-                "file may be corrupted.".format(file_path, checksum, remote.checksum)
+                "file may be corrupted.".format(file_path, checksum, remote["checksum"])
             )
     else:
         remote["sha256"] = "Passed"
@@ -250,11 +250,11 @@ def fetch_dataset(
         makedirs(data_home)
     processed = dict()
     for entry in ARCHIVE:
-        logging.info("Getting dataset {}".format(entry.filename))
+        logging.info("Getting dataset {}".format(entry["filename"]))
         result = dict()
-        ef = entry.filename
+        ef = entry["filename"]
         entry["filename"] = (
-            entry.filename if data_home is None else join(data_home, entry.filename)
+            entry["filename"] if data_home is None else join(data_home, entry["filename"])
         )
         if not exists(entry["filename"]):
             logging.info("Dataset doesn't exist")
@@ -268,8 +268,8 @@ def fetch_dataset(
                 entry, root=None, stop_on_error=stop_on_error
             )
             result["location"] = archive_path
-            result["remote_sha256"] = remote.checksum
-            result["sha256"] = remote.sha256
+            result["remote_sha256"] = remote["checksum"]
+            result["sha256"] = remote["sha256"]
         else:
             result["status"] = True
             result["location"] = entry["filename"]

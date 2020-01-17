@@ -1,11 +1,8 @@
 """CLI for plotting WRF data"""
 import click
-
-import xarray
-import pandas as pd
 import numpy as np
 
-from ..datasets import load_data
+from .common import LazyGroup
 
 class CSVType(click.ParamType):
     name = 'csv'
@@ -28,7 +25,7 @@ class CSVType(click.ParamType):
         return 'CSV'
 
 
-@click.group()
+@click.group()#(cls=LazyGroup, import_name="pydwrf2.cli:plot")
 def cli():
     """Plot data from WRF output files and processed data."""
     pass

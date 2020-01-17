@@ -1,8 +1,8 @@
 import click
-from ..database import commands
+from .common import LazyGroup
 
 
-@click.group()
+@click.group()#(cls=LazyGroup, import_name='pydwrf2.database:cli')
 def cli():
     """Generate climatological databases from WRF."""
     pass
@@ -25,7 +25,7 @@ def csv(s):
 @click.option("--aggregation", type=csv, default="mean,std")
 def aggregate(variable, index_filename, output_filename, aggregation):
     """Dumb average of data"""
-
+    from ..database import commands
     commands.aggregate(variable, index_filename, output_filename, aggregation)
 
 
@@ -47,6 +47,7 @@ def index_ls(low, high,
 
     This file acts as a gateway to remaking a database file.
     """
+    from ..database import commands
     commands.index_ls(low, high,
     database_filename=database_filename,
     database_ls_prefix=database_ls_prefix,
@@ -58,6 +59,7 @@ def index_ls(low, high,
 @click.argument("filename")
 @click.argument("output_filename")
 def index_one_file(filename, output_filename):
+    from ..database import commands
     commands.index_one_file(filename, output_filename)
 
     
@@ -76,7 +78,7 @@ def index(index_filename="output/index",
 
     Each line includes an index number into each file from the entire wrfout collection
     and the L_S and local time of that index."""
-
+    from ..database import commands
     commands.index(index_filename=index_filename,
         database_filename=database_filename,
         intermediate=intermediate)
