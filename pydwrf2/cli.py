@@ -1,11 +1,9 @@
-import click
+import argh, argparse
 import logging
 from .core import utils as cu
 from .interface import plot, database, data, single, wrf, snake
 
 
-@click.group()
-@click.option("--debug/--no-debug", default=False)
 def cli(debug=False):
     """The master CLI interface."""
     import logging.config
@@ -33,31 +31,37 @@ def register(com, group, name=None, individual=False):
 
     # If the name is not given, use the default
     if name is not None:
-        group.name = name
+        name = group["name"]
 
     # If not adding individual, add the entire group in one go
     if not individual:
-        logging.info("Adding group {} with name".format(group, group.name))
-        com.add_command(group)
+        logging.info("Adding group {} with name".format(group, name))
+        argh.add_commands(com, group["commands"], namespace=name)
+        #com.add_command(group)
     else:
         # add each entry in the group defined.
         for key, entry in group.commands.items():
             com.add_command(entry)
 
 
-SUBCOMMANDS = dict(
+
+def main():
+    SUBCOMMANDS = dict(
     plot=plot.cli,
-    database=database.cli,
-    data=data.cli,
-    single=single.cli,
-    wrf=wrf.cli,
-    snake=snake.cli,
+#    database=database.cli,
+#    data=data.cli,
+#    single=single.cli,
+#    wrf=wrf.cli,
+#    snake=snake.cli,
 )
 
-INDIVIDUAL = dict(single=True)
-for k, v in SUBCOMMANDS.items():
-    register(cli, v, name=k, individual=INDIVIDUAL.get(k, False))
+    parser = argparse.ArgumentParser()
+    argh.add_commands(parser, [cli])
 
+    INDIVIDUAL = dict(single=True)
+    for k, v in SUBCOMMANDS.items():
+      register(parser, v, name=k, individual=INDIVIDUAL.get(k, False))
+    argh.dispatch(parser)
 
 if __name__ == "__main__":
-    cli()
+    main()

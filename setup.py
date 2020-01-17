@@ -22,7 +22,8 @@ setup(
     packages=['pydwrf2'],
     entry_points={
         'console_scripts': [
-            'pydwrf2=pydwrf2.cli:cli'
+            'pydwrf2=pydwrf2.cli:main',
+            'pydwrf2_database=pydwrf2.cli:database_cli',
         ]
     },
     install_requires=requirements,
