@@ -5,6 +5,13 @@ import yaml
 from .utils import fetch_dataset, RemoteFileMetadata, get_data_home
 
 DEFAULT_REMOTE = "remote_data.yaml"
+
+def load_files(name, key, remote=None):
+    package = load_data(name)
+    for k,v in package.items():
+        if v["status"] and k.count(key):
+            yield v["location"]
+
 def load_data(name, remote=None):
     """Load a named dataset from a remote location.
 

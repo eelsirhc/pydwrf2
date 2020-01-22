@@ -337,48 +337,6 @@ def process_file(filename, rows=None):
     data = dict(L_S=l_s[rows], 
                 t15=t15)
 
-    data["times"] = nc["Times"]
+    data["Times"] = nc["Times"]
     
     return data
-
-
-def plot_t15(t15_filenames, output_filename, labels="", observation=True):
-    from ..plots import core
-    plt = core.plt
-    
-    fig = plt.figure(figsize=(8,6))
-    ax = fig.gca()
-    filename_list = [x for x in t15_filenames.split(",") if len(x)]
-    labels_list = [x for x in labels.split(",") if len(x)]
-
-    if len(labels_list) < len(filename_list):
-        labels_list.extend(filename_list[len(labels_list):])
-
-
-    #TODO : move me.
-
-    limits = np.array([np.nan,np.nan,np.nan,np.nan])
-            
-    for label,filename in zip(labels_list, filename_list):
-        with xarray.open_dataset(filename) as nc:
-            h, mylimits = core.plotline(nc["L_S"], nc["t15"],True, label=label)
-            limits = core.replace_limits(limits, mylimits)
-            
-    if observation:
-        logging.info("Plotting observation")
-        # download the observation
-        package = load_data("t15")
-        for k,v in package.items():
-            if v["status"] and k.count("t15"):
-                # read the observation
-                df = pd.read_csv(v["location"], comment="#")
-                # plot the observation
-                h2, mylimits = core.plotline(df["ls"],df["t15"],True, label="observation")
-                limits = core.replace_limits(limits, mylimits)
-
-    
-    plt.xticks(np.arange((limits[0]//180)*180, 180*(limits[1]//180)+180,180))
-    plt.xlabel("L_S")
-    plt.ylabel("T15 (K)")
-    plt.legend()
-    plt.savefig(output_filename)

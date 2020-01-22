@@ -3,6 +3,7 @@ import xarray
 from ..core import variables, utils
 from os.path import exists, dirname, join
 from os import makedirs, path
+import logging
 
 def make_directory_for_file(filepath):
     """Makes the directory pointed to be path if it doesn't exist already."""
@@ -111,10 +112,32 @@ def zonal_mean_surface(fname, variable, rows=None):
     #        if close_file:
 #                nc.close()
             return data_dict
-        
-        
-    
 
-    
+def remove_contiguous(data, entry="contiguous"):
+    """Removes the contiguous entry from the encoding from certain variables.
+      Args:
+        data  : object, probably xarray, containing 'variables'
+        entry : a string to search for and remove.
+      Remove:
+        data : cleaned.
+    """
+    for var in data.variables:
+        if entry in data[var].encoding:
+            del data[var].encoding[entry]
+    return data
 
-        
+
+def get_mode(filename):
+    """Determine the mode for this output filename.
+
+    If the file exists -> 'a' (append)
+    else -> 'w' (write)
+    """
+    mode = ""
+    if path.exists(filename):
+        logging.debug("{} exists, setting mode to 'a'".format(filename))
+        mode = "a"
+    else:
+        logging.debug("{} does not exist, setting mode to 'w'".format(filename))
+        mode = "w"
+    return mode

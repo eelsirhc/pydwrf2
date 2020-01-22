@@ -11,37 +11,6 @@ def cli():
 @cli.command()
 @click.argument("filename")
 @click.argument("output_filename")
-def ls(filename, output_filename):
-    """Program to write the Ls data to the output file
-        Args:
-            filenames: wrfout files to process
-        Returns:
-            None
-        Output:
-            Ls and Times data in output file
-    """
-    logging.info("Ls")
-    logging.info(output_filename)
-    from ..wrf import commands
-    commands.ls(filename, output_filename)
-
-@cli.command()
-@click.argument("filename")
-@click.argument("output_filename")
-@click.option("--lander", multiple=True, default=["vl1", "vl2", "msl", "mpf"])
-def lander(filename, output_filename, lander):
-    """Program to calculate surface pressure at lander sites."""
-    logging.info("Lander")
-    logging.info("Landers: {}".format(",".join(lander)))
-    logging.info(filename)
-    logging.info(output_filename)
-    from ..wrf import commands
-    commands.lander(filename, output_filename, lander)
-
-
-@cli.command()
-@click.argument("filename")
-@click.argument("output_filename")
 @click.option("--width", default=10)
 def eq_tau_od2d(filename, output_filename, width=10):
     """Program to calculate zonal mean equatorial dust opacity"""
