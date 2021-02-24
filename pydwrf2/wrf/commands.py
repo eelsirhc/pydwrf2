@@ -4,7 +4,7 @@ import os
 import logging
 import xarray
 import numpy as np
-from .common import get_mode, remove_contiguous
+from .common import get_mode, remove_contiguous, add_attributes
 
 def eq_tau_od2d(filename, output_filename, width=10):
     """Function to calculate zonal mean equatorial dust opacity.
@@ -50,7 +50,7 @@ def energy_balance(filename, output_filename):
         )
 
 
-def zonal_mean_surface(filename, output_filename, variable):
+def zonal_mean_surface(filename, output_filename, variable, attributes=None):
     from .common import zonal_mean_surface as zms
 
     logging.info("zonal mean for {}".format(variable))
@@ -69,6 +69,8 @@ def zonal_mean_surface(filename, output_filename, variable):
             logging.debug("Calculating {}".format(v))
             data.update(zms(input, v))
         zm = remove_contiguous(xarray.Dataset(data))
+
+        add_attributes(zm,attributes)
         zm.to_netcdf(
             output_filename, unlimited_dims=["Time"], mode=get_mode(output_filename)
         )
