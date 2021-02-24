@@ -1,7 +1,7 @@
 import xarray
 import numpy as np
 
-def areasum(data, area=None, south_lim=-90, north_lim=90,mean=False):
+def areasum(data, area=None, south_lim=-90, north_lim=90, mean=False):
     if area is not None:
         filtered_data = data.where((data.south_north >= south_lim) & (data.south_north < north_lim))*\
                                        area.where((area.south_north >= south_lim) & (area.south_north < north_lim))

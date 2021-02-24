@@ -5,6 +5,12 @@ from os.path import exists, dirname, join
 from os import makedirs, path
 import logging
 
+def add_attributes(var, attrs):
+    if attrs is None:
+        return
+    for key, value in attrs.items():
+        var.attrs[key] = value
+
 def make_directory_for_file(filepath):
     """Makes the directory pointed to be path if it doesn't exist already."""
 

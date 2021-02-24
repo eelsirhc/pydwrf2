@@ -17,11 +17,14 @@ def process_file(fname, variable="TAU_OD2D", width=10):
     
     ls = nc["L_S"][:]
     times = nc["Times"][:]
-
+    lats = nc["XLAT"].isel(Time=0,west_east=0)
+    south_lim = np.where(lats<=-width)[0].max()
+    north_lim = np.where(lats>+width)[0].min()
+    print(south_lim, north_lim)
     
-    tau_od2d = area_integrals.areasum(dust, area, south_lim=-width, north_lim=+width,mean=True)
+    tau_od2d = area_integrals.areasum(dust, area, south_lim=south_lim, north_lim=north_lim, mean=True)
 
-    dust_scaled = area_integrals.areasum(610*dust/psfc, area, south_lim=-width, north_lim=+width,mean=True)
+    dust_scaled = area_integrals.areasum(610*dust/psfc, area, south_lim=south_lim, north_lim=north_lim,mean=True)
     data =  dict(
         Times=times.load(),
         L_S=ls.load(),
