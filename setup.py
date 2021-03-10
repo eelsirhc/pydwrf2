@@ -8,6 +8,7 @@ requirements = [
     'xarray',
     'matplotlib',
     'netcdf4',
+    'boto3'
     # package requirements go here
 ]
 

@@ -2,16 +2,20 @@ import xarray
 import numpy as np
 
 def areasum(data, area=None, south_lim=-90, north_lim=90, mean=False):
-    if area is not None:
-        filtered_data = data.where((data.south_north >= south_lim) & (data.south_north < north_lim))*\
-                                       area.where((area.south_north >= south_lim) & (area.south_north < north_lim))
 
-        result = (filtered_data).sum(["south_north", "west_east"], skipna=True)
-        if mean:
-            result /= (area.where((area.south_north >= south_lim) & (area.south_north < north_lim))).sum(["south_north", "west_east"], skipna=True)
+    filtered_data = data.where((data.south_north >= south_lim) & (data.south_north < north_lim))    
+    if area is not None:
+        filtered_area = area.where((area.south_north >= south_lim) & (area.south_north < north_lim))
     else:
-        filtered_data = data.where((data.south_north >= south_lim) & (data.south_north < north_lim))
-        result = (filtered_data).sum(["south_north", "west_east"], skipna=True)
+        filtered_area = 1
+    
+    
+    result = (filtered_data*filtered_area).sum(["south_north", "west_east"], skipna=True)
+    if mean:
+        if isinstance(filtered_area,int):
+            result /= filtered_data.size
+        else:
+            result /= filtered_area.sum(["south_north", "west_east"], skipna=True)
     return result
 
 def read_area(nc):

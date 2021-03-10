@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from . import area_integrals
 
-def process_file(fname, variable="TAU_OD2D", width=10):
+def process_file(fname, variable="TAU_OD2D", width=10, rescale=1.0):
     """Calculate the column optical depth over the equator."""
 
     nc = xarray.open_dataset(fname)
@@ -25,6 +25,8 @@ def process_file(fname, variable="TAU_OD2D", width=10):
     tau_od2d = area_integrals.areasum(dust, area, south_lim=south_lim, north_lim=north_lim, mean=True)
 
     dust_scaled = area_integrals.areasum(610*dust/psfc, area, south_lim=south_lim, north_lim=north_lim,mean=True)
+    dust_scaled /= rescale
+
     data =  dict(
         Times=times.load(),
         L_S=ls.load(),

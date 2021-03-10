@@ -2,7 +2,7 @@
 
 from os.path import dirname, join, exists
 import yaml
-from .utils import fetch_dataset, RemoteFileMetadata, get_data_home
+from . import utils
 
 DEFAULT_REMOTE = "remote_data.yaml"
 
@@ -30,7 +30,7 @@ def load_data(name, remote=None):
 
     table = yaml.safe_load(open(remote_data,'r'))
     if name in table:
-        return fetch_dataset(table[name])
+        return utils.fetch_dataset(table[name])
     else:
         raise NameError("{} not found".format(name))
 
@@ -51,7 +51,7 @@ def list_data(remote=None, full=False):
         remote_data = remote
 
     table = yaml.safe_load(open(remote_data,'r'))
-    home = get_data_home(data_home=None)
+    home = utils.get_data_home(data_home=None)
     for name, row in table.items():
         print(name)
         if not full:
@@ -65,9 +65,9 @@ def list_data(remote=None, full=False):
                       else "\tnot downloaded")
 
 
-#if __name__ == "__main__":
-#    import argh
-#    parser = argh.ArghParser()
-#    parser.add_commands([list_data, load_data])
-#    parser.dispatch()
+if __name__ == "__main__":
+    import argh
+    parser = argh.ArghParser()
+    parser.add_commands([list_data, load_data])
+    parser.dispatch()
 
